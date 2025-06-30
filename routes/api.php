@@ -3,10 +3,14 @@
 use App\Http\Controllers\Admin\ProviderCompanyController;
 use App\Http\Controllers\Admin\ServiceController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\ApiTestController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Models\ProviderCompany;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
+
+Route::get('/api-test', [ApiTestController::class, 'apiTest']);
 
 // public route for user
 // Route::post('/register', [AuthController::class, 'register']);
