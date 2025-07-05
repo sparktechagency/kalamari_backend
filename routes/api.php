@@ -16,8 +16,6 @@ use App\Http\Controllers\User\PostController;
 use App\Http\Controllers\User\ProfileController;
 use Illuminate\Support\Facades\Route;
 
-// Route::get('send-sms', [SendSms::class, 'sendSms']);
-
 // public route for user
 Route::post('/register', [AuthController::class, 'register']);
 Route::get('/search-user-name', [AuthController::class, 'searchUserName']);
@@ -62,13 +60,13 @@ Route::middleware('auth:api')->group(function () {
     Route::middleware('user')->group(function () {
 
         // heart
-        Route::get('/toggle-heart', [HeartController::class, 'toggleHeart']);
+        Route::post('/toggle-heart', [HeartController::class, 'toggleHeart']);
 
         // message
         Route::post('/create-comment', [CommentController::class, 'createComment']);
         Route::get('/get-comments', [CommentController::class, 'getComments']);
         Route::post('/replay', [CommentController::class, 'replay']);
-        Route::get('/like', [CommentController::class, 'like']);
+        Route::post('/like', [CommentController::class, 'like']);
         Route::get('/get-comments-with-replay-like', [CommentController::class, 'getCommentWithReplayLike']);
 
         // notification

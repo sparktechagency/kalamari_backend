@@ -41,7 +41,8 @@ class HeartController extends Controller
             $exists->delete();
             return response()->json([
                 'status' => true,
-                'message' => 'Heart removed'
+                'message' => 'Heart removed',
+                'isHeart' => false
             ]);
         } else {
             $post->increment('love_reacts');
@@ -51,7 +52,8 @@ class HeartController extends Controller
             ]);
             return response()->json([
                 'status' => true,
-                'message' => 'Heart saved'
+                'message' => 'Heart saved',
+                'isHeart' => true
             ]);
         }
     }

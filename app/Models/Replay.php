@@ -22,6 +22,11 @@ class Replay extends Model
         return $this->belongsTo(Comment::class);
     }
 
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
     // // (Optional) যদি রিপ্লাই এর লাইক থাকে তাহলে
     // public function likes()
     // {

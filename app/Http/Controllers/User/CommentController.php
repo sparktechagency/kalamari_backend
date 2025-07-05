@@ -26,7 +26,7 @@ class CommentController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
-                'message'   => $validator->errors()
+                'message' => $validator->errors()
             ], 422);
         }
 
@@ -47,9 +47,9 @@ class CommentController extends Controller
         }
 
         $comment = Comment::create([
-            'post_id'      => $request->post_id,
-            'user_id'      => Auth::id(),
-            'comment'      => $request->comment
+            'post_id' => $request->post_id,
+            'user_id' => Auth::id(),
+            'comment' => $request->comment
         ], 201);
 
         return response()->json([
@@ -82,7 +82,7 @@ class CommentController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
-                'message'   => $validator->errors()
+                'message' => $validator->errors()
             ], 422);
         }
 
@@ -103,9 +103,9 @@ class CommentController extends Controller
         }
 
         $replay = Replay::create([
-            'comment_id'      => $request->comment_id,
-            'user_id'      => Auth::id(),
-            'replay'      => $request->replay
+            'comment_id' => $request->comment_id,
+            'user_id' => Auth::id(),
+            'replay' => $request->replay
         ], 201);
 
         return response()->json([
@@ -215,9 +215,51 @@ class CommentController extends Controller
     //     ]);
     // }
 
+
+    // public function getCommentWithReplayLike(Request $request)
+    // {
+    //     $posts = Post::with(['comments.user', 'comments.replies'])
+    //         ->where('id', $request->post_id)
+    //         ->get();
+
+    //     $posts->transform(function ($post) {
+    //         // JSON decode
+    //         $post->tagged = json_decode($post->tagged);
+    //         $post->photo = json_decode($post->photo);
+
+    //         // Total comment count (without replies)
+    //         $post->comment_count = $post->comments->count();
+
+    //         // Transform comments
+    //         $post->comments->transform(function ($comment) {
+    //             return [
+    //                 'id' => $comment->id,
+    //                 'post_id' => $comment->post_id,
+    //                 'user_id' => $comment->user_id,
+    //                 'user_name' => $comment->user->name ?? null,
+    //                 'avatar' => $comment->user->avatar ?? null,
+    //                 'comment' => $comment->comment,
+    //                 'like' => $comment->like,
+    //                 'created_at' => $comment->created_at,
+    //                 'updated_at' => $comment->updated_at,
+    //                 'replies' => $comment->replies, // If needed, you can transform replies too
+    //             ];
+    //         });
+
+    //         return $post;
+    //     });
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'message' => 'get comment by post with replay and like',
+    //         'data' => $posts
+    //     ]);
+    // }
+
+
     public function getCommentWithReplayLike(Request $request)
     {
-        $posts = Post::with(['comments.user', 'comments.replies'])
+        $posts = Post::with(['comments.user', 'comments.replies.user'])
             ->where('id', $request->post_id)
             ->get();
 
@@ -226,11 +268,23 @@ class CommentController extends Controller
             $post->tagged = json_decode($post->tagged);
             $post->photo = json_decode($post->photo);
 
-            // Total comment count (without replies)
+            // Total comment count (excluding replies)
             $post->comment_count = $post->comments->count();
 
             // Transform comments
             $post->comments->transform(function ($comment) {
+                // Transform replies with user info
+                $replies = $comment->replies->map(function ($reply) {
+                    return [
+                        'id' => $reply->id,
+                        'user_id' => $reply->user_id,
+                        'user_name' => $reply->user->name ?? null,
+                        'avatar' => $reply->user->avatar ?? null,
+                        'replay' => $reply->replay,
+                        'created_at' => $reply->created_at,
+                    ];
+                });
+
                 return [
                     'id' => $comment->id,
                     'post_id' => $comment->post_id,
@@ -239,9 +293,10 @@ class CommentController extends Controller
                     'avatar' => $comment->user->avatar ?? null,
                     'comment' => $comment->comment,
                     'like' => $comment->like,
+                    'reply_count' => $comment->replies->count(), // ✅ Added reply count
+                    'replies' => $replies,
                     'created_at' => $comment->created_at,
                     'updated_at' => $comment->updated_at,
-                    'replies' => $comment->replies, // If needed, you can transform replies too
                 ];
             });
 
@@ -254,4 +309,5 @@ class CommentController extends Controller
             'data' => $posts
         ]);
     }
+
 }

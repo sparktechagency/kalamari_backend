@@ -22,7 +22,7 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         // create otp
-        $otp            = rand(100000, 999999);
+        $otp = rand(100000, 999999);
         $otp_expires_at = Carbon::now()->addMinutes(10);
 
         // Send OTP Email
@@ -57,28 +57,29 @@ class AuthController extends Controller
 
         // validation roles
         $validator = Validator::make($request->all(), [
-            'full_name'             => 'required|string|max:255',
-            'user_name'             => 'sometimes|max:255',
-            'email'                 => 'required|string|email|max:255|unique:users,email',
-            'password'              => 'required|string|min:6|confirmed',
+            'full_name' => 'required|string|max:255',
+            'user_name' => 'sometimes|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email',
+            'password' => 'required|string|min:6|confirmed',
         ]);
 
         // check validation
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
-                'message'   => $validator->errors()
+                'message' => $validator->errors()
             ], 422);
         }
 
         $user = User::create([
-            'name'           => ucfirst($request->full_name),
-            'user_name'      => $request->user_name ? '@' . ucfirst($request->user_name) . '_' . rand(0, 9) : '@' . explode(' ', trim($request->full_name))[0] . '_' . rand(0, 9),
-            'email'          => $request->email,
-            'password'       => Hash::make($request->password),
-            'otp'            => $otp,
+            'name' => ucfirst($request->full_name),
+            // 'user_name' => $request->user_name ? '@' . ucfirst($request->user_name) . '_' . rand(0, 9) : '@' . explode(' ', trim($request->full_name))[0] . '_' . rand(0, 9),
+            'user_name' => $request->user_name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'otp' => $otp,
             'otp_expires_at' => $otp_expires_at,
-        ], 201);
+        ]);
 
         try {
             Mail::to($user->email)->send(new VerifyOTPMail($email_otp));
@@ -96,40 +97,28 @@ class AuthController extends Controller
     // search user name
     public function searchUserName(Request $request)
     {
-        $userName = User::where('user_name', 'like', '%' . $request->search_user_name . '%')
-            ->select('id', 'user_name')
-            ->get();
+        $userName = User::where('user_name', $request->search_user_name)
+            ->exists();
 
-        // Transform user_name
-        $transformed = $userName->map(function ($user) {
-            // Remove '@' if exists and split by '_'
-            $name = str_replace('@', '', $user->user_name); // remove '@'
-            $name = explode('_', $name)[0]; // get before '_'
-
-            return [
-                'id' => $user->id,
-                'user_name' => $name
-            ];
-        });
-
+        $message = $userName ? 'already exist' : 'not found';
         return response()->json([
             'status' => true,
-            'message' => 'Search your result',
-            'data' => $transformed
+            'message' => 'User ' . ' ' . $message,
+            'exist' => $userName ? true : false,
         ]);
     }
 
     // search user email
     public function searchUserEmail(Request $request)
     {
-        $userEmail = User::where('email', 'like', '%' . $request->search_user_email . '%')
-            ->select('id', 'email')
-            ->get();
+        $userEmail = User::where('email', $request->search_user_email)
+            ->exists();
+        $message = $userEmail ? 'already exist' : 'not found';
 
         return response()->json([
             'status' => true,
-            'message' => 'Search your result',
-            'data' => $userEmail
+            'message' => 'User' . ' ' . $message,
+            'exist' => $userEmail ? true : false,
         ]);
     }
 
@@ -153,7 +142,7 @@ class AuthController extends Controller
         if (!$user) {
             return response()->json([
                 'status' => false,
-                'message'  => 'Invalid OTP'
+                'message' => 'Invalid OTP'
             ], 401);
         }
 
@@ -162,13 +151,13 @@ class AuthController extends Controller
 
             // active
             $user->last_login_at = Carbon::now();
-            $user->user_status   = 'active';
+            $user->user_status = 'active';
 
             // user status update
-            $user->otp                = null;
-            $user->otp_expires_at     = null;
-            $user->otp_verified_at    = Carbon::now();
-            $user->verified_status    = 'verified';
+            $user->otp = null;
+            $user->otp_expires_at = null;
+            $user->otp_verified_at = Carbon::now();
+            $user->verified_status = 'verified';
             $user->save();
 
             // custom token time
@@ -181,7 +170,7 @@ class AuthController extends Controller
 
             // json response
             return response()->json([
-                'status'  => true,
+                'status' => true,
                 'message' => 'Email verified successfully',
                 'access_token' => $token,
                 'token_type' => 'bearer',
@@ -193,7 +182,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'status' => false,
-                'message'  => 'OTP expired time out'
+                'message' => 'OTP expired time out'
             ], 401);
         }
     }
@@ -203,14 +192,14 @@ class AuthController extends Controller
     {
         // validation roles
         $validator = Validator::make($request->all(), [
-            'email'                 => 'required|string|email',
+            'email' => 'required|string|email',
         ]);
 
         // check validation
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
-                'message'   => $validator->errors()
+                'message' => $validator->errors()
             ], 422);
         }
 
@@ -224,7 +213,7 @@ class AuthController extends Controller
             ], 404);
         }
 
-        $otp            = rand(100000, 999999);
+        $otp = rand(100000, 999999);
         $otp_expires_at = Carbon::now()->addMinutes(10);
 
         // email user check
@@ -237,7 +226,7 @@ class AuthController extends Controller
             $user->save();
         } else {
             return response()->json([
-                'status'  => false,
+                'status' => false,
                 'message' => 'User already verified.'
             ], 200);
         }
@@ -256,7 +245,7 @@ class AuthController extends Controller
         }
 
         return response()->json([
-            'status'  => true,
+            'status' => true,
             'message' => 'OTP resend to your email'
         ], 200);
     }
@@ -297,7 +286,7 @@ class AuthController extends Controller
                 'message' => 'Your account is unverified. Please contact support.',
             ], 403);
         }
-
+        
         // Verify Password
         if (!Hash::check($request->password, $user->password)) {
             return response()->json([
@@ -315,7 +304,7 @@ class AuthController extends Controller
         // $token = JWTAuth::fromUser($user);
 
         $user->last_login_at = Carbon::now();
-        $user->user_status   = 'active';
+        $user->user_status = 'active';
         $user->save();
 
         // Return Success Response
@@ -387,9 +376,9 @@ class AuthController extends Controller
 
             // update otp and otp veridied and otp expired at
             $user->otp_verified_at = null;
-            $user->otp             = $otp;
-            $user->otp_expires_at  = $otp_expires_at;
-            $user->verified_status          = 'unverified';
+            $user->otp = $otp;
+            $user->otp_expires_at = $otp_expires_at;
+            $user->verified_status = 'unverified';
             $user->save();
         }
         // } else {
@@ -412,7 +401,7 @@ class AuthController extends Controller
         }
 
         return response()->json([
-            'status'  => true,
+            'status' => true,
             'message' => 'OTP send to your email'
         ], 200);
     }
@@ -443,7 +432,8 @@ class AuthController extends Controller
                 'status' => false,
                 'message' => 'Unauthenticated',
             ], 404);
-        };
+        }
+        ;
 
         if ($user->verified_status == 'verified') {
             $user->password = Hash::make($request->password);
@@ -483,7 +473,7 @@ class AuthController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'current_password' => 'required|min:6',
-            'password'         => 'required|string|min:6|confirmed'
+            'password' => 'required|string|min:6|confirmed'
         ]);
 
         if ($validator->fails()) {
@@ -495,7 +485,7 @@ class AuthController extends Controller
 
         $user = User::find(Auth::id());
 
-        if (! $user) {
+        if (!$user) {
             return response()->json([
                 'status' => false,
                 'message' => 'User not found'
@@ -536,9 +526,9 @@ class AuthController extends Controller
         }
 
         if ($request->hasFile('avatar')) {
-            $file      = $request->file('avatar');
-            $filename  = time() . '_' . $file->getClientOriginalName();
-            $filepath  = $file->storeAs('avatars', $filename, 'public');
+            $file = $request->file('avatar');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $filepath = $file->storeAs('avatars', $filename, 'public');
 
             $user->avatar = '/storage/' . $filepath;
             $user->save();
@@ -546,7 +536,7 @@ class AuthController extends Controller
             return response()->json([
                 'status' => true,
                 'message' => 'Image uploaded successfully!',
-                'path'    => $user->avatar,
+                'path' => $user->avatar,
             ]);
         }
 
@@ -577,17 +567,17 @@ class AuthController extends Controller
                 unlink(public_path($user->avatar));
             }
 
-            $file      = $request->file('avatar');
-            $filename  = time() . '_' . $file->getClientOriginalName();
-            $filepath  = $file->storeAs('avatars', $filename, 'public');
+            $file = $request->file('avatar');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $filepath = $file->storeAs('avatars', $filename, 'public');
 
             $user->avatar = '/storage/' . $filepath;
             $user->save();
 
             return response()->json([
-                'status'      => true,
+                'status' => true,
                 'message' => 'Avatar updated successfully!',
-                'path'    => $user->avatar,
+                'path' => $user->avatar,
             ]);
         }
 
