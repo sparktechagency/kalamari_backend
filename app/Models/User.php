@@ -14,17 +14,6 @@ class User extends Authenticatable implements JWTSubject
     use HasFactory, Notifiable;
 
     /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
-    // protected $fillable = [
-    //     'name',
-    //     'email',
-    //     'password',
-    // ];
-
-    /**
      * The attributes that aren't mass assignable.
      *
      * @var array
@@ -56,11 +45,29 @@ class User extends Authenticatable implements JWTSubject
 
     public function getJWTIdentifier()
     {
-        return $this->getKey(); // return user id
+        return $this->getKey();
     }
 
     public function getJWTCustomClaims()
     {
-        return []; // কাস্টম ক্লেইম লাগলে এখানে দাও
+        return [];
+    }
+
+    // যাদের follow করছে (যাকে follow করছে তারা)
+    public function followers()
+    {
+        return $this->hasMany(follower::class);
+    }
+
+    // App\Models\User.php
+    // public function latestApprovedPost()
+    // {
+    //     return $this->hasOne(Post::class)->approved()->latestOfMany();
+    // }
+
+    // In User.php
+    public function latestApprovedPost()
+    {
+        return $this->hasOne(Post::class)->where('post_status', 'approved')->latest();
     }
 }

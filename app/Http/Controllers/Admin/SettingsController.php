@@ -3,118 +3,145 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Models\Setting;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
 
 class SettingsController extends Controller
 {
-    public function editProfile(Request $request){
-        $user = User::where('id',Auth::id())->where('role','ADMIN')->first();
+    // // POST: Save or Update
+    // public function termsConditions(Request $request)
+    // {
 
-        // Validation Rules
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string',
-            'email' => 'required|email',
-        ]);
+    //     $request->validate([
+    //         'content' => 'required|string',
+    //     ]);
 
-        // Validation Errors
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'message' => $validator->errors(),
-            ], 422);
-        }
+    //     $term = Setting::first();
 
-        $user->name = $request->name;
-        $user->email = $request->email;
-        $user->save();
+    //     if ($term) {
+    //         $term->update(['terms_&_conditions' => $request->content]);
+    //     } else {
+    //         $term = Setting::create(['terms_&_conditions' => $request->content]);
+    //     }
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'message' => 'Terms & Conditions saved successfully',
+    //         'data' => $term,
+    //     ]);
+    // }
+
+    // // GET: Fetch
+    // public function getTermsConditions()
+    // {
+    //     $term = Setting::first();
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'data' => $term,
+    //     ]);
+    // }
+
+    // // POST: Save or Update
+    // public function privacyPolicy(Request $request)
+    // {
+    //     $request->validate([
+    //         'content' => 'required|string',
+    //     ]);
+
+    //     $term = Setting::first();
+
+    //     if ($term) {
+    //         $term->update(['privacy_policy' => $request->content]);
+    //     } else {
+    //         $term = Setting::create(['privacy_policy' => $request->content]);
+    //     }
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'message' => 'Privacy Policy saved successfully',
+    //         'data' => $term,
+    //     ]);
+    // }
+
+    // // GET: Fetch
+    // public function getPrivacyPolicy()
+    // {
+    //     $term = Setting::first();
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'data' => $term,
+    //     ]);
+    // }
+
+    // // POST: Save or Update
+    // public function ourMission(Request $request)
+    // {
+    //     $request->validate([
+    //         'content' => 'required|string',
+    //     ]);
+
+    //     $term = Setting::first();
+
+    //     if ($term) {
+    //         $term->update(['our_mission' => $request->content]);
+    //     } else {
+    //         $term = Setting::create(['our_mission' => $request->content]);
+    //     }
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'message' => 'Our Mission saved successfully',
+    //         'data' => $term,
+    //     ]);
+    // }
+
+    // // GET: Fetch
+    // public function getOurMission()
+    // {
+    //     $term = Setting::first();
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'data' => $term,
+    //     ]);
+    // }
+
+    // // GET: Fetch
+    // public function getSettings()
+    // {
+    //     $term = Setting::first();
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'message' => 'Settings',
+    //         'data' => $term,
+    //     ]);
+    // }
+
+     // GET all settings as key-value pair
+    public function getSettings()
+    {
+        $settings = Setting::all()->pluck('value', 'key');
 
         return response()->json([
             'status' => true,
-            'message' => 'Profile update successful',
-            'data' => $user
-        ], 201);
+            'message' => 'Settings',
+            'data' => $settings
+        ]);
     }
 
-    public function changePassword(Request $request)
+    // POST or UPDATE single or multiple settings
+    public function updateSettings(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'current_password' => 'required|min:6',
-            'new_password'         => 'required|string|min:6|confirmed'
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'message' => $validator->errors()
-            ], 422);
-        }
-
-        $user = User::where('id',Auth::id())->where('role','ADMIN')->first();
-
-        if (! $user) {
-            return response()->json([
-                'status' => false,
-                'message' => 'User not found'
-            ], 404);
-        }
-
-        if (Hash::check($request->current_password, $user->password)) {
-            $user->password = Hash::make($request->new_password);
-            $user->save();
-
-            return response()->json([
-                'status' => true,
-                'message' => 'Password updated successfully!',
-            ]);
-        } else {
-            return response()->json([
-                'status' => false,
-                'message' => 'Invalid current password!',
-            ]);
-        }
-    }
-
-    public function changeAvatar(Request $request)
-    {
-         $user = User::where('id',Auth::id())->where('role','ADMIN')->first();
-
-        $validator = Validator::make($request->all(), [
-            'avatar' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', // 2MB max
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'message' => $validator->errors()
-            ], 422);
-        }
-
-        if ($request->hasFile('avatar')) {
-            if ($user->avatar && file_exists(public_path($user->avatar))) {
-                unlink(public_path($user->avatar));
-            }
-
-            $file      = $request->file('avatar');
-            $filename  = time() . '_' . $file->getClientOriginalName();
-            $filepath  = $file->storeAs('images', $filename, 'public');
-
-            $user->avatar = '/storage/' . $filepath;
-            $user->save();
-
-            return response()->json([
-                'status'      => true,
-                'message' => 'Avatar updated successfully!',
-                'path'    => $user->avatar, 
-            ]);
+        foreach ($request->all() as $key => $value) {
+            Setting::updateOrCreate(['key' => $key], ['value' => $value]);
         }
 
         return response()->json([
-            'status' => false,
-            'message' => 'No image uploaded!',
-        ], 400);
+            'status' => true,
+            'message' => 'Settings updated successfully'
+        ]);
     }
 }

@@ -3,7 +3,6 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use phpDocumentor\Reflection\Types\Nullable;
 
 return new class extends Migration
 {
@@ -14,26 +13,23 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
+            $table->string('name', 255);
+            $table->string('user_name', 255);
+            $table->string('email', 255)->unique();
+            $table->string('password', 255);
+            $table->enum('user_status', ['active', 'inactive'])->default('inactive');
+            $table->timestamp('last_login_at')->nullable();
+            $table->enum('role', ['ADMIN', 'USER'])->default('USER');
             $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
-            $table->enum('role', ['ADMIN', 'COMPANY', 'USER'])->default('USER');
-            $table->enum('status', ['active', 'inactive'])->default('inactive');
-            $table->string('address')->nullable();
             $table->timestamp('otp_verified_at')->nullable();
             $table->string('otp')->nullable();
-            $table->timestamp('otp_expired_at')->nullable();
-            $table->string('phone_number')->nullable();
-            $table->string('avatar')->nullable();
-            
-            $table->json('types')->nullable();
-            $table->string('city')->nullable();
-            $table->string('state')->nullable();
-            $table->unsignedInteger('rating')->nullable();
-            $table->longText('about')->nullable();
-            $table->json('overview')->nullable();
-
+            $table->timestamp('otp_expires_at')->nullable();
+            $table->longText('bio')->nullable();
+            $table->string('avatar')->default('default/avatar.jpg');
+            $table->enum('verified_status', ['verified', 'unverified'])->default('unverified');
+            $table->enum('profile_status', ['admin', 'unbanned', 'banned'])->default('unbanned');
+            $table->string('contact_number')->nullable();
+            $table->string('location')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

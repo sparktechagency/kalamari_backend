@@ -16,10 +16,10 @@ class UserMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (Auth::user()->role !== 'USER') {
+         if (Auth::user()->role !== 'USER') {
             return response()->json([
                 'status' => false,
-                'message' => 'Unauthorized'
+                'message' => 'Unauthorized user'
             ], 403);
         }
         return $next($request);
