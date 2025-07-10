@@ -25,7 +25,7 @@ return new class extends Migration
             $table->string('otp')->nullable();
             $table->timestamp('otp_expires_at')->nullable();
             $table->longText('bio')->nullable();
-            $table->string('avatar')->default('default/avatar.jpg');
+            $table->string('avatar')->default('/default/avatar.jpg');
             $table->enum('verified_status', ['verified', 'unverified'])->default('unverified');
             $table->enum('profile_status', ['admin', 'unbanned', 'banned'])->default('unbanned');
             $table->string('contact_number')->nullable();

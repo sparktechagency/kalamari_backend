@@ -15,19 +15,19 @@ class MyProfileController extends Controller
     {
         // validation roles
         $validator = Validator::make($request->all(), [
-            'avatar'            => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', // 2MB max
-            'first_name'        => 'required|string|max:255',
-            'last_name'         => 'required|string',
-            'contact_number'    => 'required|string',
-            'location'          => 'required|string',
+            'avatar' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048', // 2MB max
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string',
+            'contact_number' => 'required|string',
+            'location' => 'required|string',
 
         ]);
 
         // check validation
         if ($validator->fails()) {
             return response()->json([
-                'status'    => false,
-                'message'   => $validator->errors()
+                'status' => false,
+                'message' => $validator->errors()
             ], 422);
         }
 
@@ -36,23 +36,26 @@ class MyProfileController extends Controller
         // User Not Found
         if (!$user) {
             return response()->json([
-                'status'  => false,
+                'status' => false,
                 'message' => 'User not found',
             ], 404);
         }
 
         if ($request->hasFile('avatar')) {
             if ($user->avatar && file_exists(public_path($user->avatar))) {
-                unlink(public_path($user->avatar));
+                if (!$user->avatar == '/default/avatar.jpg') {
+                    unlink(public_path($user->avatar));
+                }
             }
 
-            $file      = $request->file('avatar');
-            $filename  = time() . '_' . $file->getClientOriginalName();
-            $filepath  = $file->storeAs('avatars', $filename, 'public');
+            $file = $request->file('avatar');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $filepath = $file->storeAs('avatars', $filename, 'public');
+
+            // avatar update
+            $user->avatar = '/storage/' . $filepath;
         }
 
-        // avatar update
-        $user->avatar = '/storage/' . $filepath;
 
         // update user name and bio
         $user->name = $user->name = trim(($request->first_name ?? '') . ' ' . ($request->last_name ?? ''));
@@ -61,7 +64,7 @@ class MyProfileController extends Controller
         $user->save();
 
         return response()->json([
-            'status'  => true,
+            'status' => true,
             'message' => 'Profile updated successfully!',
         ]);
     }

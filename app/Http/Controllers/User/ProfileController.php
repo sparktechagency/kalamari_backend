@@ -22,17 +22,16 @@ class ProfileController extends Controller
     {
         // validation roles
         $validator = Validator::make($request->all(), [
-            'avatar'      => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', // 2MB max
-            'name'        => 'required|string|max:255',
-            'bio'         => 'required|string',
-
+            'avatar' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048', // 2MB max
+            'name' => 'sometimes|string|max:255',
+            'bio' => 'sometimes|string',
         ]);
 
         // check validation
         if ($validator->fails()) {
             return response()->json([
-                'status'    => false,
-                'message'   => $validator->errors()
+                'status' => false,
+                'message' => $validator->errors()
             ], 422);
         }
 
@@ -41,7 +40,7 @@ class ProfileController extends Controller
         // User Not Found
         if (!$user) {
             return response()->json([
-                'status'  => false,
+                'status' => false,
                 'message' => 'User not found',
             ], 404);
         }
@@ -49,25 +48,29 @@ class ProfileController extends Controller
 
         if ($request->hasFile('avatar')) {
             if ($user->avatar && file_exists(public_path($user->avatar))) {
-                unlink(public_path($user->avatar));
+                if (!$user->avatar == '/default/avatar.jpg') {
+                    unlink(public_path($user->avatar));
+                }
             }
 
-            $file      = $request->file('avatar');
-            $filename  = time() . '_' . $file->getClientOriginalName();
-            $filepath  = $file->storeAs('avatars', $filename, 'public');
+            $file = $request->file('avatar');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $filepath = $file->storeAs('avatars', $filename, 'public');
+
+            // avatar update
+            $user->avatar = '/storage/' . $filepath;
         }
 
-        // avatar update
-        $user->avatar = '/storage/' . $filepath;
+
 
         // update user name and bio
         $user->name = ucfirst($request->name);
-        $user->user_name = '@' . explode(' ', trim(ucfirst($request->name)))[0] . '_' . rand(0, 9);
+        // $user->user_name = '@' . explode(' ', trim(ucfirst($request->name)))[0] . '_' . rand(0, 9);
         $user->bio = $request->bio;
         $user->save();
 
         return response()->json([
-            'status'  => true,
+            'status' => true,
             'message' => 'Profile updated successfully!',
         ]);
     }
@@ -93,7 +96,8 @@ class ProfileController extends Controller
         return response()->json([
             'status' => true,
             'message' => $request->user_id ? 'User who following' : 'Who I am following',
-            'following_count' => count($followings),
+            // 'following_count' => formatCount(count($followings)),
+            'following_count' => kmCount(count($followings)),
             'data' => !$request->user_id ? $followings : null
         ]);
     }
@@ -119,7 +123,7 @@ class ProfileController extends Controller
         return response()->json([
             'status' => true,
             'message' => $request->user_id ? 'User followers' : 'My followers',
-            'follower_count' => count($followers),
+            'follower_count' => kmCount(count($followers)),
             'data' => !$request->user_id ? $followers : null
         ]);
     }
@@ -237,7 +241,7 @@ class ProfileController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
-                'message'   => $validator->errors()
+                'message' => $validator->errors()
             ], 422);
         }
 
@@ -280,7 +284,7 @@ class ProfileController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
-                'message'   => $validator->errors()
+                'message' => $validator->errors()
             ], 422);
         }
 
@@ -296,5 +300,30 @@ class ProfileController extends Controller
             'message' => 'User report successfully',
             'data' => $user_report
         ], 201);
+    }
+
+
+    public function deleteRecent(Request $request)
+    {
+        $user = Auth::user();
+        
+
+        $post = Post::where('id', $request->post_id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (!$post) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Post not found or not authorized to delete'
+            ], 404);
+        }
+
+        $post->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Post deleted successfully'
+        ]);
     }
 }

@@ -64,6 +64,7 @@ Route::middleware('auth:api')->group(function () {
 
         // message
         Route::post('/create-comment', [CommentController::class, 'createComment']);
+        Route::delete('/delete-comment',[CommentController::class,'deleteComment']);
         Route::get('/get-comments', [CommentController::class, 'getComments']);
         Route::post('/replay', [CommentController::class, 'replay']);
         Route::post('/like', [CommentController::class, 'like']);
@@ -75,10 +76,11 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/read-all', [NotificationController::class, 'readAll']);
 
         // bookmark
-        Route::get('/toggle-bookmark', [BookmarkController::class, 'toggleBookmark']);
+        Route::post('/toggle-bookmark', [BookmarkController::class, 'toggleBookmark']);
         Route::get('/get-bookmarks', [BookmarkController::class, 'getBookmarks']);
         Route::get('/view-post', [BookmarkController::class, 'viewPost']);
         Route::get('/search-have_it', [BookmarkController::class, 'getSearchHave_it']);
+        Route::delete('/delete-have_it', [BookmarkController::class, 'deleteHave_it']);
 
         // home
         Route::get('/discovery', [PostController::class, 'discovery']);
@@ -101,5 +103,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/get-my-posts', [ProfileController::class, 'getMyPosts']);
         Route::post('/user-block', [ProfileController::class, 'userBlock']);
         Route::post('/user-report', [ProfileController::class, 'userReport']);
+        Route::delete('/delete-recent', [ProfileController::class, 'deleteRecent']);
+        
     });
 });

@@ -70,4 +70,5 @@ class User extends Authenticatable implements JWTSubject
     {
         return $this->hasOne(Post::class)->where('post_status', 'approved')->latest();
     }
+    
 }

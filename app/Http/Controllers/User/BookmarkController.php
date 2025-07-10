@@ -4,6 +4,7 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\Bookmark;
+use App\Models\Heart;
 use App\Models\Post;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,7 +15,7 @@ class BookmarkController extends Controller
     {
         $postId = $request->post_id;
         $targetId = Auth::id();
-        $type     = $request->type;
+        $type = $request->type;
 
         $post = Post::where('id', $postId)->first();
         if (!$post) {
@@ -39,18 +40,20 @@ class BookmarkController extends Controller
             $exists->delete();
             return response()->json([
                 'status' => true,
-                'message' => 'Bookmark removed'
+                'message' => 'Bookmark removed',
+                'isBookmark' => false
             ]);
         } else {
             Bookmark::create([
                 'user_id' => $targetId,
                 'post_id' => $postId,
-                'type'   => $type
+                'type' => $type
 
             ]);
             return response()->json([
                 'status' => true,
-                'message' => 'bookmark saved'
+                'message' => 'bookmark saved',
+                'isBookmark' => true
             ]);
         }
     }
@@ -152,7 +155,7 @@ class BookmarkController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Bookmarks',
-            $request->type == '1' ? 'restaurant_count' : 'home_made_count' =>  $request->type == '1' ? $restaurantCount : $homeMadeCount,
+            $request->type == '1' ? 'restaurant_count' : 'home_made_count' => $request->type == '1' ? $restaurantCount : $homeMadeCount,
             'data' => $posts,
         ]);
     }
@@ -174,6 +177,15 @@ class BookmarkController extends Controller
         $post->tagged = json_decode($post->tagged);
         $post->photo = json_decode($post->photo);
 
+        // ✅ Actual isHeart check for this post (optional: if you track heart at post level)
+        $post->isHeart = Heart::where('post_id', $post->id)
+            ->where('user_id', Auth::id())
+            ->exists();
+
+        $post->isBookmark = Bookmark::where('post_id', $post->id)
+            ->where('user_id', Auth::id())
+            ->exists();
+
 
         return response()->json([
             'status' => true,
@@ -184,13 +196,24 @@ class BookmarkController extends Controller
 
     public function getSearchHave_it(Request $request)
     {
+        $userId = $request->user_id ?? Auth::id();
+
+
         if ($request->type == '1') {
-            $posts = Post::where('restaurant_name', 'like', '%' . $request->search_have_it . '%')
-                ->where('have_it', $request->type == '1' ? 'Restaurant' : null)
+            // Restaurant
+            return $posts = Post::where('user_id', $userId)
+                ->where('have_it', 'Restaurant')
+                ->where(function ($query) use ($request) {
+                    $query->where('meal_name', 'like', '%' . $request->search_have_it . '%')
+                        ->orWhere('restaurant_name', 'like', '%' . $request->search_have_it . '%');
+                })
                 ->get();
+
         } elseif ($request->type == '2') {
-            $posts = Post::where('restaurant_name', 'like', '%' . $request->search_have_it . '%')
-                ->where('have_it', $request->type == '2' ? 'Home-made' : null)
+            // Home-made
+            $posts = Post::where('user_id', $userId)
+                ->where('have_it', 'Home-made')
+                ->where('meal_name', 'like', '%' . $request->search_have_it . '%')
                 ->get();
         }
 
@@ -200,4 +223,50 @@ class BookmarkController extends Controller
             'data' => $posts
         ]);
     }
+
+    public function deleteHave_it(Request $request)
+    {
+        $user = Auth::user();
+
+        if ($request->type == '1') {
+            $bookmark = Bookmark::where('post_id', $request->post_id)
+                ->where('user_id', $user->id)
+                ->where('type', $request->type)
+                ->first();
+
+            if (!$bookmark) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Restaurant bookmark not found or not authorized to delete'
+                ], 404);
+            }
+
+            $bookmark->delete();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Restaurant bookmark deleted successfully'
+            ]);
+        } elseif ($request->type == '2') {
+            $bookmark = Bookmark::where('post_id', $request->post_id)
+                ->where('user_id', $user->id)
+                ->where('type', $request->type)
+                ->first();
+
+            if (!$bookmark) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Home made bookmark not found or not authorized to delete'
+                ], 404);
+            }
+
+            $bookmark->delete();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Home made bookmark deleted successfully'
+            ]);
+        }
+    }
+
 }

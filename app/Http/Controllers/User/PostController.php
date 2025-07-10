@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Models\Bookmark;
 use App\Models\Follower;
+use App\Models\Heart;
 use App\Models\Post;
 use App\Models\User;
 use App\Models\UserBlock;
@@ -20,18 +22,18 @@ class PostController extends Controller
     {
         // validation roles
         $validator = Validator::make($request->all(), [
-            'meal_name'       => 'required|string',
-            'have_it'         => 'required|string|in:1,2', // নিশ্চিতভাবে 1 বা 2 হতে হবে
+            'meal_name' => 'required|string',
+            'have_it' => 'required|string|in:1,2', // নিশ্চিতভাবে 1 বা 2 হতে হবে
             'restaurant_name' => 'nullable|string',
-            'food_type'       => 'required|string',
-            'location'        => 'nullable|string',
-            'lat'        => 'nullable|string',
-            'lng'        => 'nullable|string',
-            'description'     => 'required|string',
-            'rating'          => 'nullable|string',
-            'tagged'          => 'sometimes|array',
-            'images'          => 'required|array|max:3', // max 3 image
-            'images.*'        => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'food_type' => 'required|string',
+            'location' => 'nullable|string',
+            'lat' => 'nullable|string',
+            'lng' => 'nullable|string',
+            'description' => 'required|string',
+            'rating' => 'nullable|string',
+            'tagged' => 'sometimes|array',
+            'images' => 'required|array|max:3', // max 3 image
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
         ]);
 
         // Custom conditional validation after base validation
@@ -61,7 +63,7 @@ class PostController extends Controller
         // User Not Found
         if (!$user) {
             return response()->json([
-                'status'  => false,
+                'status' => false,
                 'message' => 'User not found',
             ], 404);
         }
@@ -77,20 +79,20 @@ class PostController extends Controller
         }
 
         $post = Post::create([
-            'user_id'     => Auth::id(),
-            'user_name'   => Auth::user()->name,
-            'meal_name'   => $request->meal_name,
-            'have_it'     => $request->have_it == 1 ? 'Restaurant' : 'Home-made',
-            'restaurant_name'   => $request->restaurant_name ?? null,
-            'food_type'   => $request->food_type,
-            'location'    => $request->location ?? null,
-            'lat'    => $request->lat ?? null,
-            'lng'    => $request->lng ?? null,
+            'user_id' => Auth::id(),
+            'user_name' => Auth::user()->name,
+            'meal_name' => $request->meal_name,
+            'have_it' => $request->have_it == 1 ? 'Restaurant' : 'Home-made',
+            'restaurant_name' => $request->restaurant_name ?? null,
+            'food_type' => $request->food_type,
+            'location' => $request->location ?? null,
+            'lat' => $request->lat ?? null,
+            'lng' => $request->lng ?? null,
             'description' => $request->description,
-            'rating'      => $request->rating ?? null,
-            'tagged'      => json_encode($request->tagged),
+            'rating' => $request->rating ?? null,
+            'tagged' => json_encode($request->tagged),
             'tagged_count' => $request->tagged ? count($request->tagged) - 1 : 0,
-            'photo'       => json_encode($paths) ?? null
+            'photo' => json_encode($paths) ?? null
         ]);
 
         // 🔔 Notify all users
@@ -181,6 +183,16 @@ class PostController extends Controller
             $post->tagged = json_decode($post->tagged);
             $post->photo = json_decode($post->photo);
             $post->status = 'Following'; //  status add (no database store)
+
+            // ✅ Actual isHeart check for this post (optional: if you track heart at post level)
+            $post->isHeart = Heart::where('post_id', $post->id)
+                ->where('user_id', Auth::id())
+                ->exists();
+
+            $post->isBookmark = Bookmark::where('post_id', $post->id)
+                ->where('user_id', Auth::id())
+                ->exists();
+
             return $post;
         });
 
@@ -655,6 +667,15 @@ class PostController extends Controller
             $post->tagged = json_decode($post->tagged);
             $post->photo = json_decode($post->photo);
 
+            // ✅ Actual isHeart check for this post (optional: if you track heart at post level)
+            $post->isHeart = Heart::where('post_id', $post->id)
+                ->where('user_id', $authId)
+                ->exists();
+
+            $post->isBookmark = Bookmark::where('post_id', $post->id)
+                ->where('user_id', Auth::id())
+                ->exists();
+
             if ($post->user_id == $authId) {
                 $post->status = null;
             } elseif (in_array($post->user_id, $followingIds)) {
@@ -719,7 +740,7 @@ class PostController extends Controller
     public function userSearch(Request $request)
     {
         $users = User::where('name', 'like', '%' . $request->user_name . '%')
-            ->select('id', 'name','avatar')
+            ->select('id', 'name', 'avatar')
             ->get();
 
         return response()->json([
@@ -778,7 +799,7 @@ class PostController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
-                'message'   => $validator->errors()
+                'message' => $validator->errors()
             ], 422);
         }
 

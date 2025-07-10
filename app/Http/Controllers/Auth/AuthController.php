@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Mail\VerifyOTPMail;
+use App\Models\Follower;
+use App\Models\Post;
 use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
@@ -103,7 +105,7 @@ class AuthController extends Controller
         $message = $userName ? 'already exist' : 'not found';
         return response()->json([
             'status' => true,
-            'message' => 'User ' . ' ' . $message,
+            'message' => 'User' . ' ' . $message,
             'exist' => $userName ? true : false,
         ]);
     }
@@ -117,7 +119,7 @@ class AuthController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'User' . ' ' . $message,
+            'message' => 'Email' . ' ' . $message,
             'exist' => $userEmail ? true : false,
         ]);
     }
@@ -286,7 +288,7 @@ class AuthController extends Controller
                 'message' => 'Your account is unverified. Please contact support.',
             ], 403);
         }
-        
+
         // Verify Password
         if (!Hash::check($request->password, $user->password)) {
             return response()->json([
@@ -451,14 +453,24 @@ class AuthController extends Controller
     }
 
     // user profile by id
-    public function profile()
+    public function profile(Request $request)
     {
-        $user = User::find(Auth::id());
+        $user = User::find($request->user_id ?? Auth::id());
         if (!$user) {
             return response()->json([
                 'ok' => false,
                 'message' => 'User not found'
             ], 404);
+        }
+
+        $followingIds = Follower::where('user_id', $request->user_id)->pluck('user_id')->toArray();
+
+        if ($user->id == Auth::id()) {
+            $user->status = null;
+        } elseif (in_array($user->id, $followingIds)) {
+            $user->status = 'Following';
+        } else {
+            $user->status = 'Follow';
         }
 
         return response()->json([
