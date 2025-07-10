@@ -193,6 +193,11 @@ class PostController extends Controller
                 ->where('user_id', Auth::id())
                 ->exists();
 
+            // Get avatar from user relation
+            $post->avatar = $post->user->avatar ?? null;
+
+            unset($post->user); // optional: if you don't want to expose full user data
+
             return $post;
         });
 
@@ -683,6 +688,11 @@ class PostController extends Controller
             } else {
                 $post->status = 'Follow';
             }
+
+            // Get avatar from user relation
+            $post->avatar = $post->user->avatar ?? null;
+
+            unset($post->user); // optional: if you don't want to expose full user data
 
             return $post;
         });
