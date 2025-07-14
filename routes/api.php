@@ -14,13 +14,14 @@ use App\Http\Controllers\User\CommentController;
 use App\Http\Controllers\User\HeartController;
 use App\Http\Controllers\User\PostController;
 use App\Http\Controllers\User\ProfileController;
+use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Route;
+use NunoMaduro\Collision\Adapters\Phpunit\State;
 
 // public route for user
 Route::post('/register', [AuthController::class, 'register']);
 Route::get('/search-user-name', [AuthController::class, 'searchUserName']);
 Route::get('/search-user-email', [AuthController::class, 'searchUserEmail']);
-
 Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -38,7 +39,6 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/user-analytics', [UserAnalyticsController::class, 'userAnalytics']);
         Route::get('/get-settings', [SettingsController::class, 'getSettings']);
         Route::post('/update-settings', [SettingsController::class, 'updateSettings']);
-
 
         // manage posts
         Route::get('/get-posts', [PostManageController::class, 'getPosts']);
@@ -72,8 +72,10 @@ Route::middleware('auth:api')->group(function () {
 
         // notification
         Route::get('/get-notifications', [NotificationController::class, 'getNotifications']);
-        Route::get('/read', [NotificationController::class, 'read']);
-        Route::get('/read-all', [NotificationController::class, 'readAll']);
+        Route::post('/read', [NotificationController::class, 'read']);
+        Route::post('/read-all', [NotificationController::class, 'readAll']);
+        Route::get('/notification-stats', [NotificationController::class, 'stats']);
+        Route::delete('/delete-notification', [NotificationController::class, 'deleteNotification']);
 
         // bookmark
         Route::post('/toggle-bookmark', [BookmarkController::class, 'toggleBookmark']);
@@ -88,7 +90,6 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/following', [PostController::class, 'following']);
         Route::get('/user-search', [PostController::class, 'userSearch']);
         Route::get('/restaurant-search', [PostController::class, 'restaurantSearch']);
-
 
         // post
         Route::post('/create-post', [PostController::class, 'createPost']);

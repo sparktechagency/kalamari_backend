@@ -10,6 +10,7 @@ use App\Models\Post;
 use App\Models\User;
 use App\Models\UserBlock;
 use App\Notifications\Me\NewPostCreated as MeNewPostCreated;
+use App\Notifications\NewFollowNotification;
 use App\Notifications\NewPostCreated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -58,6 +59,7 @@ class PostController extends Controller
             ], 422);
         }
 
+
         $user = User::find(Auth::id());
 
         // User Not Found
@@ -95,10 +97,15 @@ class PostController extends Controller
             'photo' => json_encode($paths) ?? null
         ]);
 
-        // 🔔 Notify all users
-        $users = User::where('id', '!=', Auth::id())->get(); // excluding the creator
         // Notify me
         Auth::user()->notify(new MeNewPostCreated($post));
+
+        // follwers_id lists
+        $followers_id = Follower::where('user_id', Auth::id())->pluck('follower_id');
+        // $followers_id = Follower::where('user_id', Auth::id())->pluck('follower_id')->filter()->values();
+
+        $users = User::whereIn('id', $followers_id)->get();
+        
         // Notify all without me
         foreach ($users as $user) {
             $user->notify(new NewPostCreated($post));
@@ -106,7 +113,7 @@ class PostController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => 'Post created successful with notification',
+            'message' => 'Post created successful',
             'data' => $post
         ]);
     }
@@ -736,10 +743,15 @@ class PostController extends Controller
                 'message' => 'unfollowed'
             ]);
         } else {
-            Follower::create([
+            $Follower = Follower::create([
                 'user_id' => $userId,
                 'follower_id' => $targetId,
             ]);
+
+            $notifyUser = User::where('id', $request->user_id)->first();
+            // Notify user
+            $notifyUser->notify(new NewFollowNotification($Follower));
+
             return response()->json([
                 'status' => true,
                 'message' => 'followed'

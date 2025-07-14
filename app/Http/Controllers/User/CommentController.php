@@ -9,6 +9,7 @@ use App\Models\Like;
 use App\Models\Post;
 use App\Models\Replay;
 use App\Models\User;
+use App\Notifications\NewCommentNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -52,6 +53,17 @@ class CommentController extends Controller
             'user_id' => Auth::id(),
             'comment' => $request->comment
         ]);
+
+
+        // post user
+        $post_user_id = Post::where('id', $request->post_id)->first()->user_id;
+
+        $notifyUser = User::where('id',$post_user_id)->first();
+
+        // Notify post user
+        $notifyUser->notify(new NewCommentNotification($comment));
+
+        
 
         return response()->json([
             'status' => true,

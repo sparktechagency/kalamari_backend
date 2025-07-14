@@ -5,6 +5,8 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use App\Models\Heart;
 use App\Models\Post;
+use App\Models\User;
+use App\Notifications\NewReactNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -46,10 +48,19 @@ class HeartController extends Controller
             ]);
         } else {
             $post->increment('love_reacts');
-            Heart::create([
+            $heart = Heart::create([
                 'user_id' => $targetId,
                 'post_id' => $postId,
             ]);
+
+            // post user
+            $post_user_id = Post::where('id', $request->post_id)->first()->user_id;
+
+            $notifyUser = User::where('id', $post_user_id)->first();
+
+            // Notify post user
+            $notifyUser->notify(new NewReactNotification($heart));
+
             return response()->json([
                 'status' => true,
                 'message' => 'Heart saved',
