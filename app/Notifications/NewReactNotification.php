@@ -32,6 +32,7 @@ class NewReactNotification extends Notification implements ShouldQueue
             'user_id' => $this->heart->user_id,
             'user_name' => User::where('id', $this->heart->user_id)->first()->user_name,
             'message' => 'reacted on your post.',
+            'redirect' => 'post_id'
         ];
     }
 }

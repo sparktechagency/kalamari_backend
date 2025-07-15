@@ -32,6 +32,7 @@ class NewFollowNotification extends Notification implements ShouldQueue
             'user_id' => $this->follower->follower_id,
             'user_name' => User::where('id', $this->follower->follower_id)->first()->user_name,
             'message' => 'just followed you.',
+            'redirect' => 'user_id'
         ];
     }
 }

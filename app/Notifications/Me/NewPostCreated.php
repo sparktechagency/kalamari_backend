@@ -30,6 +30,7 @@ class NewPostCreated extends Notification implements ShouldQueue
             'user_id' => $this->post->user_id,
             'user_name' => 'Your',
             'message' => 'post added successfully',
+            'redirect' => 'post_id'
         ];
     }
 }

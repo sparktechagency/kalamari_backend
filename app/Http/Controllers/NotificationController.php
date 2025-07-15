@@ -31,6 +31,7 @@ class NotificationController extends Controller
                     ->setTimezone('Asia/Dhaka')
                     ->format('h:i A'),
                 'read_at' => $notification->read_at,
+                'redirect' => $notification->data['redirect'] ?? ''
             ];
         });
 

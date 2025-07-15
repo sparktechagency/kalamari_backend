@@ -32,6 +32,7 @@ class NewCommentNotification extends Notification implements ShouldQueue
             'user_id' => $this->comment->user_id,
             'user_name' => User::where('id', $this->comment->user_id)->first()->user_name,
             'message' => 'add a comment in your post.',
+            'redirect' => 'post_id'
         ];
     }
 }
