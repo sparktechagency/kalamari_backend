@@ -32,8 +32,8 @@
         padding: 15px;
         text-align: center;
         border-radius: 8px;
-        border: 1px dashed #007bff;
-        color: #007bff;
+        border: 1px dashed #ED6237;
+        color: #ED6237;
       }
       .btn-verify {
         display: inline-block;
@@ -51,7 +51,7 @@
         margin-top: 20px;
       }
       .footer-text a {
-        color: #007bff;
+        color: #ED6237;
         text-decoration: none;
       }
       .otp-lock {
@@ -59,7 +59,7 @@
         font-size: 80px;
       }
       .welcome-section {
-        background: #144fa9db;
+        background: #ED6237;
         padding: 30px;
         border-radius: 4px;
         color: #fff;
@@ -103,7 +103,7 @@
     </div>
     <div class="footer-text">
       <p>If you did not request this OTP, please <a href="#">contact us</a> immediately.</p>
-      <p>Thank you,<br>The Laravel Backend Developer Team</p>
+      <p>Thank you,<br>The Kalamari Developer Team</p>
     </div>
   </div>
 
