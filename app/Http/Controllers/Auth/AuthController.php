@@ -466,11 +466,11 @@ class AuthController extends Controller
         $followingIds = Follower::where('user_id', $request->user_id)->pluck('user_id')->toArray();
 
         if ($user->id == Auth::id()) {
-            $user->status = null;
+            $user->isfollowing = null;
         } elseif (in_array($user->id, $followingIds)) {
-            $user->status = 'Following';
+            $user->isfollowing = true;
         } else {
-            $user->status = 'Follow';
+            $user->isfollowing = false;
         }
 
         return response()->json([
