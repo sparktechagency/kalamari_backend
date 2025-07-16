@@ -27,9 +27,10 @@ class NotificationController extends Controller
                 'user_name' => $notification->data['user_name'] ?? '',
                 'avatar' => $user->avatar ?? null,
                 'message' => $notification->data['message'] ?? '',
-                'created_at' => optional($notification->created_at)
-                    ->setTimezone('Asia/Dhaka')
-                    ->format('h:i A'),
+                'created_at' => $notification->created_at,
+                // 'created_at' => optional($notification->created_at)
+                //     ->setTimezone('Asia/Dhaka')
+                //     ->format('h:i A'),
                 'read_at' => $notification->read_at,
                 'redirect' => $notification->data['redirect'] ?? ''
             ];
@@ -80,7 +81,7 @@ class NotificationController extends Controller
     }
 
     //for unread notification count
-    public function stats()
+    public function status()
     {
         return response()->json([
             'status' => true,

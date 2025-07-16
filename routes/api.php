@@ -74,7 +74,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/get-notifications', [NotificationController::class, 'getNotifications']);
         Route::post('/read', [NotificationController::class, 'read']);
         Route::post('/read-all', [NotificationController::class, 'readAll']);
-        Route::get('/notification-stats', [NotificationController::class, 'stats']);
+        Route::get('/notification-status', [NotificationController::class, 'status']);
         Route::delete('/delete-notification', [NotificationController::class, 'deleteNotification']);
 
         // bookmark

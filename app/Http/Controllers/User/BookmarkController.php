@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Bookmark;
 use App\Models\Heart;
 use App\Models\Post;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
 class BookmarkController extends Controller
 {
@@ -126,15 +128,15 @@ class BookmarkController extends Controller
         if ($request->type === '1') {
             $posts = Post::whereIn('id', $bookmarks_id)
                 ->latest()
-                ->paginate($request->per_page ?? 10);
+                ->get();
         } elseif ($request->type === '2') {
             $posts = Post::whereIn('id', $bookmarks_id)
                 ->latest()
-                ->paginate($request->per_page ?? 10);
+                ->get();
         } else {
             $posts = Post::whereIn('id', $bookmarks_id)
                 ->latest()
-                ->paginate($request->per_page ?? 10);
+                ->get();
         }
 
         // If no post found
@@ -186,6 +188,8 @@ class BookmarkController extends Controller
             ->where('user_id', Auth::id())
             ->exists();
 
+        $post->avatar = User::where('id', $post->user_id)->first()->avatar;
+
 
         return response()->json([
             'status' => true,
@@ -194,35 +198,106 @@ class BookmarkController extends Controller
         ]);
     }
 
+    // public function getSearchHave_it(Request $request)
+    // {
+
+    //     // validation roles
+    //     $validator = Validator::make($request->all(), [
+    //         'type' => 'required',
+    //         'search_have_it' => 'required'
+    //     ]);
+
+    //     if ($validator->fails()) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'errors' => $validator->errors()
+    //         ], 422);
+    //     }
+
+    //     $userId = $request->user_id ?? Auth::id();
+
+    //     $bookmarks_id = Bookmark::where('user_id', $userId)->where('type', $request->type)->pluck('post_id');
+
+
+    //     if ($request->type == '1') {
+    //         // Restaurant
+    //         $posts = Post::where('user_id', $userId)
+    //             ->where('have_it', 'Restaurant')
+    //             ->where('id', $bookmarks_id)
+    //             ->where(function ($query) use ($request) {
+    //                 $query->where('meal_name', 'like', '%' . $request->search_have_it . '%')
+    //                     ->orWhere('restaurant_name', 'like', '%' . $request->search_have_it . '%');
+    //             })
+    //             ->get();
+
+    //     } elseif ($request->type == '2') {
+    //         // Home-made
+    //         $posts = Post::where('user_id', $userId)
+    //             ->where('have_it', 'Home-made')
+    //             ->where('id', $bookmarks_id)
+    //             ->where('meal_name', 'like', '%' . $request->search_have_it . '%')
+    //             ->get();
+    //     }
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'message' => 'Search your result',
+    //         'data' => $posts
+    //     ]);
+    // }
+
+
     public function getSearchHave_it(Request $request)
     {
+        // // Step 1: Validation
+        // $validator = Validator::make($request->all(), [
+        //     'type' => 'in:1,2',
+        //     'search_have_it' => 'string'
+        // ]);
+
+        // if ($validator->fails()) {
+        //     return response()->json([
+        //         'status' => false,
+        //         'errors' => $validator->errors()
+        //     ], 422);
+        // }
+
+        // Step 2: Get current user ID
         $userId = $request->user_id ?? Auth::id();
 
+        // Step 3: Get bookmark post IDs
+        $bookmarks_id = Bookmark::where('user_id', $userId)
+            ->where('type', $request->type)
+            ->pluck('post_id');
 
-        if ($request->type == '1') {
-            // Restaurant
-            return $posts = Post::where('user_id', $userId)
-                ->where('have_it', 'Restaurant')
-                ->where(function ($query) use ($request) {
-                    $query->where('meal_name', 'like', '%' . $request->search_have_it . '%')
-                        ->orWhere('restaurant_name', 'like', '%' . $request->search_have_it . '%');
-                })
-                ->get();
+        // Step 4: Search logic based on type
+        $posts = Post::whereIn('id', $bookmarks_id)
+            ->when($request->type == '1', function ($query) use ($request) {
+                $query->where('have_it', 'Restaurant')
+                    ->where(function ($q) use ($request) {
+                        $q->where('meal_name', 'like', '%' . $request->search_have_it . '%')
+                            ->orWhere('restaurant_name', 'like', '%' . $request->search_have_it . '%');
+                    });
+            })
+            ->when($request->type == '2', function ($query) use ($request) {
+                $query->where('have_it', 'Home-made')
+                    ->where('meal_name', 'like', '%' . $request->search_have_it . '%');
+            })
+            ->get();
 
-        } elseif ($request->type == '2') {
-            // Home-made
-            $posts = Post::where('user_id', $userId)
-                ->where('have_it', 'Home-made')
-                ->where('meal_name', 'like', '%' . $request->search_have_it . '%')
-                ->get();
+        foreach ($posts as $post) {
+            $post->photo = json_decode($post->photo);
+            $post->tagged = json_decode($post->tagged);
         }
 
+        // Step 5: Return response
         return response()->json([
             'status' => true,
             'message' => 'Search your result',
             'data' => $posts
         ]);
     }
+
 
     public function deleteHave_it(Request $request)
     {
