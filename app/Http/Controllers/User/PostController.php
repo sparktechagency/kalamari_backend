@@ -43,9 +43,9 @@ class PostController extends Controller
                 if (!$request->restaurant_name) {
                     $validator->errors()->add('restaurant_name', 'The restaurant name field is required when have_it is 1.');
                 }
-                if (!$request->location) {
-                    $validator->errors()->add('location', 'The location field is required when have_it is 1.');
-                }
+                // if (!$request->location) {
+                //     $validator->errors()->add('location', 'The location field is required when have_it is 1.');
+                // }
                 if (!$request->rating) {
                     $validator->errors()->add('rating', 'The rating field is required when have_it is 1.');
                 }

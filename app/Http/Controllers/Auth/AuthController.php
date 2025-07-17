@@ -463,7 +463,7 @@ class AuthController extends Controller
             ], 404);
         }
 
-        $followingIds = Follower::where('user_id', $request->user_id)->pluck('user_id')->toArray();
+        $followingIds = Follower::where('follower_id', Auth::id())->pluck('user_id')->toArray();
 
         if ($user->id == Auth::id()) {
             $user->isfollowing = null;
