@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Tymon\JWTAuth\Exceptions\JWTException;
+use Tymon\JWTAuth\Exceptions\TokenExpiredException;
+use Tymon\JWTAuth\Exceptions\TokenInvalidException;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
@@ -597,5 +599,32 @@ class AuthController extends Controller
             'status' => false,
             'message' => 'No image uploaded!',
         ], 400);
+    }
+
+    public function checkToken(Request $request)
+    {
+        try {
+            $user = JWTAuth::setToken($request->token)->authenticate();
+
+            if (!$user) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'User not found'
+                ], 404);
+            }
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Token is valid',
+                'data' => $user
+            ]);
+
+        } catch (TokenExpiredException $e) {
+            return response()->json(['status' => false, 'message' => 'Token expired'], 401);
+        } catch (TokenInvalidException $e) {
+            return response()->json(['status' => false, 'message' => 'Invalid token'], 401);
+        } catch (JWTException $e) {
+            return response()->json(['status' => false, 'message' => 'Token not provided'], 400);
+        }
     }
 }

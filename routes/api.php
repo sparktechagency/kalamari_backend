@@ -27,12 +27,17 @@ Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 
+
+Route::get('/check-token', [AuthController::class,'checkToken']);
+
 // private route for user
 Route::middleware('auth:api')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/change-password', [AuthController::class, 'changePassword']);
     Route::get('/profile', [AuthController::class, 'profile']);
     Route::post('/update-password', [AuthController::class, 'updatePassword']);
+
+    
 
     // admin
     Route::middleware('admin')->group(function () {
