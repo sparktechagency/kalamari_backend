@@ -11,12 +11,15 @@ class UserReportController extends Controller
 {
     public function getReports(Request $request)
     {
-        $user_reports = UserReport::all();
+        $perPage = $request->per_page ?? 10;
 
-        foreach ($user_reports as $user_report) {
-            $user_report->reporter_info = User::find($user_report->reporter_id);
-            $user_report->reported_info = User::find($user_report->reported_id);
-        }
+        $user_reports = UserReport::paginate($perPage);
+
+        $user_reports->getCollection()->transform(function ($report) {
+            $report->reporter_info = User::find($report->reporter_id);
+            $report->reported_info = User::find($report->reported_id);
+            return $report;
+        });
 
         return response()->json([
             'status' => true,
@@ -24,6 +27,7 @@ class UserReportController extends Controller
             'data' => $user_reports
         ]);
     }
+
 
     public function getReport(Request $request)
     {

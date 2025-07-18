@@ -27,6 +27,8 @@ Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::get('/check-token', [AuthController::class, 'checkToken']);
+Route::post('/store-contact', [AuthController::class, 'storeContact']);
+Route::get('/search-contact', [AuthController::class, 'searchContact']);
 
 Route::middleware('auth:api')->group(function () {
     // private route for user

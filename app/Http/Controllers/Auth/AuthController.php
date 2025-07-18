@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Mail\VerifyOTPMail;
+use App\Models\Contact;
 use App\Models\Follower;
 use App\Models\Post;
 use App\Models\User;
@@ -632,5 +633,32 @@ class AuthController extends Controller
         } catch (JWTException $e) {
             return response()->json(['status' => false, 'message' => 'Token not provided'], 400);
         }
+    }
+
+    public function storeContact(Request $request){
+        // validation roles
+        $validator = Validator::make($request->all(), [
+            'contact_lists' => 'required',
+        ]);
+
+        // check validation
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors()
+            ], 422);
+        }
+
+        $contact_lists = Contact::create([
+            'user_id'=> Auth::id(),
+            'contact_lists' => $request->contact_lists        ]
+        );
+
+        return response()->json([
+            'status'=> true,
+            'message'=> 'Store contact lists',
+            'data'=> $contact_lists
+        ]);
+
     }
 }
