@@ -26,40 +26,44 @@ Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
 Route::post('/resend-otp', [AuthController::class, 'resendOtp']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::get('/check-token', [AuthController::class, 'checkToken']);
 
-
-Route::get('/check-token', [AuthController::class,'checkToken']);
-
-// private route for user
 Route::middleware('auth:api')->group(function () {
+    // private route for user
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/change-password', [AuthController::class, 'changePassword']);
     Route::get('/profile', [AuthController::class, 'profile']);
     Route::post('/update-password', [AuthController::class, 'updatePassword']);
 
-    
+    // notification
+    Route::get('/get-notifications', [NotificationController::class, 'getNotifications']);
+    Route::post('/read', [NotificationController::class, 'read']);
+    Route::post('/read-all', [NotificationController::class, 'readAll']);
+    Route::get('/notification-status', [NotificationController::class, 'status']);
 
     // admin
-    Route::middleware('admin')->group(function () {
+    Route::middleware('admin')->prefix('admin')->group(function () {
         Route::get('/user-analytics', [UserAnalyticsController::class, 'userAnalytics']);
         Route::get('/get-settings', [SettingsController::class, 'getSettings']);
         Route::post('/update-settings', [SettingsController::class, 'updateSettings']);
 
         // manage posts
         Route::get('/get-posts', [PostManageController::class, 'getPosts']);
+        Route::get('/get-post', [PostManageController::class, 'getPost']);
         Route::delete('/delete-post', [PostManageController::class, 'deletePost']);
 
         // manage users
         Route::get('/get-users', [UserManageController::class, 'getUsers']);
+        Route::get('/get-user', [UserManageController::class, 'getUser']);
         Route::delete('/delete-user', [UserManageController::class, 'deleteUser']);
 
         // profile
         Route::post('/update-admin-profile', [MyProfileController::class, 'updateAdminProfile']);
 
         // report
-        Route::get('/get-user-report', [UserReportController::class, 'userReport']);
+        Route::get('/get-reports', [UserReportController::class, 'getReports']);
+        Route::get('/get-report', [UserReportController::class, 'getReport']);
     });
-
 
     // user
     Route::middleware('user')->group(function () {
@@ -69,18 +73,11 @@ Route::middleware('auth:api')->group(function () {
 
         // message
         Route::post('/create-comment', [CommentController::class, 'createComment']);
-        Route::delete('/delete-comment',[CommentController::class,'deleteComment']);
+        Route::delete('/delete-comment', [CommentController::class, 'deleteComment']);
         Route::get('/get-comments', [CommentController::class, 'getComments']);
         Route::post('/replay', [CommentController::class, 'replay']);
         Route::post('/like', [CommentController::class, 'like']);
         Route::get('/get-comments-with-replay-like', [CommentController::class, 'getCommentWithReplayLike']);
-
-        // notification
-        Route::get('/get-notifications', [NotificationController::class, 'getNotifications']);
-        Route::post('/read', [NotificationController::class, 'read']);
-        Route::post('/read-all', [NotificationController::class, 'readAll']);
-        Route::get('/notification-status', [NotificationController::class, 'status']);
-        Route::delete('/delete-notification', [NotificationController::class, 'deleteNotification']);
 
         // bookmark
         Route::post('/toggle-bookmark', [BookmarkController::class, 'toggleBookmark']);
@@ -110,6 +107,6 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/user-block', [ProfileController::class, 'userBlock']);
         Route::post('/user-report', [ProfileController::class, 'userReport']);
         Route::delete('/delete-recent', [ProfileController::class, 'deleteRecent']);
-        
+
     });
 });

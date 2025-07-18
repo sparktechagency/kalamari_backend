@@ -50,9 +50,10 @@ class UserManageController extends Controller
         $users->getCollection()->transform(function ($user) {
             return [
                 'id' => $user->id,
-                'image' => $user->avatar ?? null,
-                'name'  => $user->name,
+                'avatar' => $user->avatar ?? null,
+                'name' => $user->name,
                 'email' => $user->email,
+                'verified_status' => $user->verified_status
             ];
         });
 
@@ -63,6 +64,22 @@ class UserManageController extends Controller
         ]);
     }
 
+    public function getUser(Request $request)
+    {
+        $user = User::where('role', 'USER')->where('id', $request->user_id)->first();
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'User not found'
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'View user',
+            'data' => $user
+        ]);
+    }
 
     public function deleteUser(Request $request)
     {
@@ -75,7 +92,7 @@ class UserManageController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
-                'message'   => $validator->errors()
+                'message' => $validator->errors()
             ], 422);
         }
 

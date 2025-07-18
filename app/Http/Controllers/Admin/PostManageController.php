@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Comment;
 use App\Models\Post;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -11,27 +12,25 @@ class PostManageController extends Controller
 {
     public function getPosts(Request $request)
     {
-        $query = Post::where('post_status', 'approved');
+        $query = Post::where('post_status', 'approved')
+            ->with('user'); // eager load user for avatar, name etc.
 
-
-        // Search functionality
+        // Search functionality (based on user name)
         if ($request->has('search') && $request->search != '') {
-            $searchTerm = $request->search;
-            $query->where(function ($q) use ($searchTerm) {
-                $q->where('user_name', 'like', "%{$searchTerm}%");
-                // ->orWhere('email', 'like', "%{$searchTerm}%");
+            $search = $request->search;
+            $query->whereHas('user', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%");
             });
         }
 
         $posts = $query->paginate($request->per_page ?? 10);
 
-
         $posts->getCollection()->transform(function ($post) {
             return [
-                'id' => $post->id,
+                'post_id' => $post->id,
                 'user_id' => $post->user_id,
-                'image' =>  $post->user->avatar ?? null, // user avatar,
-                'name'  => $post->user->name,
+                'avatar' => $post->user->avatar ?? null,
+                'name' => $post->user->name ?? null,
                 'location' => $post->location,
                 'food_type' => $post->food_type,
                 'have_it' => $post->have_it,
@@ -42,6 +41,27 @@ class PostManageController extends Controller
             'status' => true,
             'message' => 'All posts',
             'data' => $posts
+        ]);
+    }
+
+    public function getPost(Request $request){
+        $post = Post::where('id', $request->post_id)->first();
+
+        if (!$post) {
+            return response()->json([
+                'status'=> false,
+                'message'=> 'Post not found'
+            ]);
+        }
+        
+        $post->photo = json_decode($post->photo, true);
+        $post->tagged = json_decode($post->tagged, true);
+        $post->commentCounts = Comment::where('post_id', $post->id)->get()->count();
+
+        return response()->json([
+            'status'=> true,
+            'message'=> 'View post',
+            'data'=> $post
         ]);
     }
 
@@ -57,7 +77,7 @@ class PostManageController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
-                'message'   => $validator->errors()
+                'message' => $validator->errors()
             ], 422);
         }
 

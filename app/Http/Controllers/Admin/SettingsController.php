@@ -120,7 +120,7 @@ class SettingsController extends Controller
     //     ]);
     // }
 
-     // GET all settings as key-value pair
+    // GET all settings as key-value pair
     public function getSettings()
     {
         $settings = Setting::all()->pluck('value', 'key');

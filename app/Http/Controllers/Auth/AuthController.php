@@ -7,6 +7,7 @@ use App\Mail\VerifyOTPMail;
 use App\Models\Follower;
 use App\Models\Post;
 use App\Models\User;
+use App\Notifications\NewUserCreationNotification;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -90,6 +91,11 @@ class AuthController extends Controller
         } catch (Exception $e) {
             Log::error($e->getMessage());
         }
+
+        $notifyUser = User::where('role', 'ADMIN')->first();
+
+        // Notify post user
+        $notifyUser->notify(new NewUserCreationNotification($user));
 
         // json response
         return response()->json([

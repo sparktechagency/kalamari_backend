@@ -9,6 +9,7 @@ use App\Models\RecentPost;
 use App\Models\User;
 use App\Models\UserBlock;
 use App\Models\UserReport;
+use App\Notifications\NewReportCreationNotification;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -294,6 +295,11 @@ class ProfileController extends Controller
             'reported_id' => $request->reported_id,
             'content' => $request->content,
         ]);
+
+        $notifyUser = User::where('role', 'ADMIN')->first();
+        // Notify post user
+        $notifyUser->notify(new NewReportCreationNotification($user_report));
+
 
         return response()->json([
             'status' => true,

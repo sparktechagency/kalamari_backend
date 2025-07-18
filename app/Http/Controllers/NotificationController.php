@@ -24,6 +24,7 @@ class NotificationController extends Controller
                 'id' => $notification->id,
                 'post_id' => $notification->data['post_id'] ?? null,
                 'user_id' => $notification->data['user_id'] ?? null,
+                'report_id' => $notification->data['report_id'] ?? null,
                 'user_name' => $notification->data['user_name'] ?? '',
                 'avatar' => $user->avatar ?? null,
                 'message' => $notification->data['message'] ?? '',

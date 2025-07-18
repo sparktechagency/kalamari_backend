@@ -12,6 +12,7 @@ use App\Models\UserBlock;
 use App\Notifications\Me\NewPostCreated as MeNewPostCreated;
 use App\Notifications\NewFollowNotification;
 use App\Notifications\NewPostCreated;
+use App\Notifications\NewPostCreationNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -110,6 +111,11 @@ class PostController extends Controller
         foreach ($users as $user) {
             $user->notify(new NewPostCreated($post));
         }
+
+        $notifyUser = User::where('role', 'ADMIN')->first();
+        // Notify post user
+        $notifyUser->notify(new NewPostCreationNotification($post));
+
 
         return response()->json([
             'status' => true,
