@@ -635,13 +635,14 @@ class AuthController extends Controller
         }
     }
 
-    public function storeContact(Request $request){
-        // validation roles
+    public function storeContact(Request $request)
+    {
+        // Validate contact_lists as array
         $validator = Validator::make($request->all(), [
-            'contact_lists' => 'required',
+            'contact_lists' => 'required|array|min:1',
+            'contact_lists.*' => 'string'
         ]);
 
-        // check validation
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
@@ -649,16 +650,62 @@ class AuthController extends Controller
             ], 422);
         }
 
+        // Store contacts as JSON string
         $contact_lists = Contact::create([
-            'user_id'=> Auth::id(),
-            'contact_lists' => $request->contact_lists        ]
-        );
+            'user_id' => Auth::id(),
+            'contact_lists' => json_encode($request->contact_lists)
+        ]);
 
         return response()->json([
-            'status'=> true,
-            'message'=> 'Store contact lists',
-            'data'=> $contact_lists
+            'status' => true,
+            'message' => 'Store contact lists',
+            'data' => $contact_lists
+        ]);
+    }
+
+    public function searchContact(Request $request)
+    {
+        $search = $request->search_number;
+
+        $contact = Contact::where('user_id', Auth::id())->first();
+
+        if (!$contact) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No contact list found',
+                'data' => []
+            ]);
+        }
+
+        // Clean contact_lists string
+        $contact_lists = trim($contact->contact_lists);
+
+        // Step 1: Remove unwanted characters: quotes, brackets, curly braces
+        $cleaned = str_replace(['[', ']', '{', '}', '"', '\''], '', $contact_lists);
+
+        // Step 2: Split by comma
+        $contactArray = array_map('trim', explode(',', $cleaned));
+
+        // Step 3: If search given, filter
+        if ($search) {
+            $matched = array_filter($contactArray, function ($number) use ($search) {
+                return str_contains($number, $search);
+            });
+
+            return response()->json([
+                'status' => !empty($matched),
+                'message' => !empty($matched) ? 'Number found' : 'Number not found',
+                'data' => array_values($matched)
+            ]);
+        }
+
+        // No search, return all
+        return response()->json([
+            'status' => true,
+            'message' => 'All contact numbers',
+            'data' => $contactArray
         ]);
 
     }
+
 }
