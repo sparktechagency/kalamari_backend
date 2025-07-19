@@ -16,10 +16,10 @@ class MyProfileController extends Controller
         // validation roles
         $validator = Validator::make($request->all(), [
             'avatar' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048', // 2MB max
-            'first_name' => 'required|string|max:255',
-            'last_name' => 'required|string',
-            'contact_number' => 'required|string',
-            'location' => 'required|string',
+            'first_name' => 'sometimes|string',
+            'last_name' => 'sometimes|string',
+            'contact_number' => 'sometimes|string',
+            'location' => 'sometimes|string',
 
         ]);
 
