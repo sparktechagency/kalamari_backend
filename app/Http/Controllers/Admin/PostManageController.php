@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Comment;
 use App\Models\Post;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -57,6 +58,7 @@ class PostManageController extends Controller
         $post->photo = json_decode($post->photo, true);
         $post->tagged = json_decode($post->tagged, true);
         $post->commentCounts = Comment::where('post_id', $post->id)->get()->count();
+        $post->avatar = User::where('id',$post->user_id)->first()->avatar;
 
         return response()->json([
             'status'=> true,
@@ -64,7 +66,7 @@ class PostManageController extends Controller
             'data'=> $post
         ]);
     }
-
+    
 
     public function deletePost(Request $request)
     {
