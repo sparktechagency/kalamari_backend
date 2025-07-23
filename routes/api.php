@@ -62,6 +62,7 @@ Route::middleware('auth:api')->group(function () {
 
         // profile
         Route::post('/update-admin-profile', [MyProfileController::class, 'updateAdminProfile']);
+        Route::get('/get-admin-profile', [MyProfileController::class, 'getAdminProfile']);
 
         // report
         Route::get('/get-reports', [UserReportController::class, 'getReports']);

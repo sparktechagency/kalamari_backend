@@ -16,11 +16,10 @@ class MyProfileController extends Controller
         // validation roles
         $validator = Validator::make($request->all(), [
             'avatar' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048', // 2MB max
-            'first_name' => 'sometimes|string',
+            'name' => 'sometimes|string',
             'last_name' => 'sometimes|string',
             'contact_number' => 'sometimes|string',
             'location' => 'sometimes|string',
-
         ]);
 
         // check validation
@@ -58,14 +57,34 @@ class MyProfileController extends Controller
 
 
         // update user name and bio
-        $user->name = $user->name = trim(($request->first_name ?? '') . ' ' . ($request->last_name ?? ''));
-        $user->contact_number = $request->contact_number;
-        $user->location = $request->location;
+        $user->name = $request->name;
+        $user->last_name = $request->last_name;
+        $user->contact_number = $request->contact_number ?? $user->contact_number;
+        $user->location = $request->location ?? $user->location;
         $user->save();
 
         return response()->json([
             'status' => true,
             'message' => 'Profile updated successfully!',
+            'data' => $user,
+        ]);
+    }
+
+    public function getAdminProfile()
+    {
+        $admin = User::where('id', Auth::id())->where('role', 'ADMIN')->first();
+
+        if (!$admin) {
+            return response()->json([
+                'status' => false,
+                'message' => 'User not found',
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Get profile',
+            'data' => $admin
         ]);
     }
 }
