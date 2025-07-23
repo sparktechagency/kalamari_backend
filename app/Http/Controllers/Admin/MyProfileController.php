@@ -17,7 +17,7 @@ class MyProfileController extends Controller
         $validator = Validator::make($request->all(), [
             'avatar' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048', // 2MB max
             'name' => 'sometimes|string',
-            'last_name' => 'sometimes|string',
+            'last_name' => 'sometimes',
             'contact_number' => 'sometimes|string',
             'location' => 'sometimes|string',
         ]);
