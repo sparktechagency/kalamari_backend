@@ -16,10 +16,10 @@ class MyProfileController extends Controller
         // validation roles
         $validator = Validator::make($request->all(), [
             'avatar' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048', // 2MB max
-            'name' => 'sometimes|string',
-            'last_name' => 'sometimes',
-            'contact_number' => 'sometimes|string',
-            'location' => 'sometimes|string',
+            'name' => 'nullable|string',
+            'last_name' => 'nullable',
+            'contact_number' => 'nullable|string',
+            'location' => 'nullable|string',
         ]);
 
         // check validation
@@ -30,7 +30,8 @@ class MyProfileController extends Controller
             ], 422);
         }
 
-        $user = User::find(Auth::id());
+        // $user = User::find(Auth::id());
+        $user = Auth::user();
 
         // User Not Found
         if (!$user) {
@@ -57,8 +58,8 @@ class MyProfileController extends Controller
 
 
         // update user name and bio
-        $user->name = $request->name;
-        $user->last_name = $request->last_name;
+        $user->name = $request->name ?? $user->name;
+        $user->last_name = $request->last_name ?? $user->last_name;
         $user->contact_number = $request->contact_number ?? $user->contact_number;
         $user->location = $request->location ?? $user->location;
         $user->save();
