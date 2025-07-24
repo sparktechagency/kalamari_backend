@@ -888,8 +888,8 @@ class PostController extends Controller
     public function restaurantSearch(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'lat' => 'required|numeric',
-            'lng' => 'required|numeric',
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
             'radius' => 'sometimes|numeric',
         ]);
 
@@ -900,8 +900,8 @@ class PostController extends Controller
             ], 422);
         }
 
-        $lat = $request->lat;
-        $lng = $request->lng;
+        $lat = $request->latitude;
+        $lng = $request->longitude;
         $radiusInKm = $request->radius ?? 10; // default 10km
 
         $restaurants = Post::select(
