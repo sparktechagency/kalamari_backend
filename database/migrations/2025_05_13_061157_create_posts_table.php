@@ -20,8 +20,8 @@ return new class extends Migration
             $table->string('have_it');
             $table->string('food_type');
             $table->string('location')->nullable();
-            $table->string('lat')->nullable();
-            $table->string('lng')->nullable();
+            $table->string('latitude')->nullable();
+            $table->string('longitude')->nullable();
             $table->text('description');
             $table->string('rating')->nullable();
             $table->json('photo');

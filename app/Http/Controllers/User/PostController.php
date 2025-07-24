@@ -28,9 +28,9 @@ class PostController extends Controller
             'have_it' => 'required|string|in:1,2', // নিশ্চিতভাবে 1 বা 2 হতে হবে
             'restaurant_name' => 'nullable|string',
             'food_type' => 'required|string',
-            'location' => 'nullable|string',
-            'lat' => 'nullable|string',
-            'lng' => 'nullable|string',
+            'location' => 'required|string',
+            'lat' => 'required|string',
+            'lng' => 'required|string',
             'description' => 'required|string',
             'rating' => 'nullable|string',
             'tagged' => 'sometimes|array',
@@ -89,8 +89,8 @@ class PostController extends Controller
             'restaurant_name' => $request->restaurant_name ?? null,
             'food_type' => $request->food_type,
             'location' => $request->location ?? null,
-            'lat' => $request->lat ?? null,
-            'lng' => $request->lng ?? null,
+            'latitude' => $request->lat ?? null,
+            'longitude' => $request->lng ?? null,
             'description' => $request->description,
             'rating' => $request->rating ?? null,
             'tagged' => json_encode($request->tagged),
@@ -907,32 +907,34 @@ class PostController extends Controller
         $restaurants = Post::select(
             'restaurant_name',
             'location',
-            'lat',
-            'lng',
+            'latitude',
+            'longitude',
             DB::raw('COUNT(*) as post_count'),
             DB::raw('AVG(rating) as average_rating'),
             DB::raw("(
             6371 * acos(
-                cos(radians($lat)) * cos(radians(lat)) *
-                cos(radians(lng) - radians($lng)) +
-                sin(radians($lat)) * sin(radians(lat))
+                cos(radians($lat)) * cos(radians(latitude)) *
+                cos(radians(longitude) - radians($lng)) +
+                sin(radians($lat)) * sin(radians(latitude))
             )
         ) AS distance")
         )
             ->whereNotNull('restaurant_name')
             ->where('have_it', 'Restaurant')
             ->where('post_status', 'approved')
-            ->groupBy('restaurant_name', 'location', 'lat', 'lng')
+            ->groupBy('restaurant_name', 'location', 'latitude', 'longitude')
             ->having('distance', '<=', $radiusInKm)
             ->orderBy('distance')
             ->get();
+
+            
 
         return response()->json([
             'status' => true,
             'message' => "Nearby Restaurants within {$radiusInKm}km",
             'center' => [
-                'lat' => $lat,
-                'lng' => $lng,
+                'latitude' => $lat,
+                'longitude' => $lng,
             ],
             'data' => $restaurants
         ]);
