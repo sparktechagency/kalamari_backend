@@ -106,7 +106,7 @@ class PostController extends Controller
         // $followers_id = Follower::where('user_id', Auth::id())->pluck('follower_id')->filter()->values();
 
         $users = User::whereIn('id', $followers_id)->get();
-        
+
         // Notify all without me
         foreach ($users as $user) {
             $user->notify(new NewPostCreated($post));
@@ -778,52 +778,121 @@ class PostController extends Controller
         ]);
     }
 
+    // public function restaurantSearch(Request $request)
+    // {
+    //     // $locationName = $request->location;
+
+    //     // if (!$locationName) {
+    //     //     return response()->json([
+    //     //         'status' => false,
+    //     //         'message' => 'Location name is required'
+    //     //     ]);
+    //     // }
+
+
+
+
+    //     // $lat = $request->lat;
+    //     // $lng = $request->lng;
+    //     // $radius = $request->radius; // km radius
+
+    //     // // Haversine formula
+    //     // $restaurants = Post::select('*')
+    //     //     ->selectRaw("(6371 * acos(cos(radians(?)) * cos(radians(lat)) * cos(radians(lng) - radians(?)) + sin(radians(?)) * sin(radians(lat)))) AS distance", [
+    //     //         $lat,
+    //     //         $lng,
+    //     //         $lat
+    //     //     ])
+    //     //     ->where('have_it', 'Restaurant')
+    //     //     ->having('distance', '<=', $radius)
+    //     //     ->orderBy('distance')
+    //     //     ->get();
+
+    //     // return response()->json([
+    //     //     'status' => true,
+    //     //     'message' => 'Nearby Restaurants from: ' . $locationName,
+    //     //     'coordinates' => ['lat' => $lat, 'lng' => $lng, 'radius' => $radius],
+    //     //     'data' => $restaurants,
+    //     // ]);
+
+    //     // validation roles
+    //     $validator = Validator::make($request->all(), [
+    //         'location' => 'required|string',
+    //         'lat' => 'required|string',
+    //         'lng' => 'required|string',
+    //         'radius' => 'sometimes|numeric',
+    //     ]);
+
+    //     // check validation
+    //     if ($validator->fails()) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => $validator->errors()
+    //         ], 422);
+    //     }
+
+    //     // Optional: Limit search range in kilometers
+    //     $radiusInKm = $request->radius ?? 10;
+
+    //     // Step 1: Get coordinates from location (from posts table)
+    //     $centerPost = Post::where('location', 'like', "%{$request->location}%")
+    //         ->whereNotNull('lat')
+    //         ->whereNotNull('lng')
+    //         ->first();
+
+    //     if (!$centerPost) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'No posts found in this location'
+    //         ]);
+    //     }
+
+    //     $lat = $centerPost->lat;
+    //     $lng = $centerPost->lng;
+
+    //     // Step 2: Fetch nearby restaurants using Haversine Formula
+    //     $restaurants = Post::select(
+    //         'restaurant_name',
+    //         'location',
+    //         'lat',
+    //         'lng',
+    //         DB::raw('COUNT(*) as post_count'),
+    //         DB::raw('AVG(rating) as average_rating'),
+    //         DB::raw("(
+    //             6371 * acos(
+    //                 cos(radians($lat)) * cos(radians(lat)) *
+    //                 cos(radians(lng) - radians($lng)) +
+    //                 sin(radians($lat)) * sin(radians(lat))
+    //             )
+    //         ) AS distance")
+    //     )
+    //         ->whereNotNull('restaurant_name')
+    //         ->where('have_it', 'Restaurant')
+    //         ->where('post_status', 'approved')
+    //         ->groupBy('restaurant_name', 'location', 'lat', 'lng')
+    //         ->having('distance', '<=', $radiusInKm)
+    //         ->orderBy('distance')
+    //         ->get();
+
+    //     return response()->json([
+    //         'status' => true,
+    //         'message' => "Nearby Restaurants from: " . $request->location,
+    //         'center' => [
+    //             'lat' => $lat,
+    //             'lng' => $lng,
+    //         ],
+    //         'data' => $restaurants
+    //     ]);
+    // }
+
     public function restaurantSearch(Request $request)
     {
-        // $locationName = $request->location;
-
-        // if (!$locationName) {
-        //     return response()->json([
-        //         'status' => false,
-        //         'message' => 'Location name is required'
-        //     ]);
-        // }
-
-
-
-
-        // $lat = $request->lat;
-        // $lng = $request->lng;
-        // $radius = $request->radius; // km radius
-
-        // // Haversine formula
-        // $restaurants = Post::select('*')
-        //     ->selectRaw("(6371 * acos(cos(radians(?)) * cos(radians(lat)) * cos(radians(lng) - radians(?)) + sin(radians(?)) * sin(radians(lat)))) AS distance", [
-        //         $lat,
-        //         $lng,
-        //         $lat
-        //     ])
-        //     ->where('have_it', 'Restaurant')
-        //     ->having('distance', '<=', $radius)
-        //     ->orderBy('distance')
-        //     ->get();
-
-        // return response()->json([
-        //     'status' => true,
-        //     'message' => 'Nearby Restaurants from: ' . $locationName,
-        //     'coordinates' => ['lat' => $lat, 'lng' => $lng, 'radius' => $radius],
-        //     'data' => $restaurants,
-        // ]);
-
-        // validation roles
         $validator = Validator::make($request->all(), [
-            'location' => 'required|string',
-            'lat' => 'required|string',
-            'lng' => 'required|string',
+            'lat' => 'required|numeric',
+            'lng' => 'required|numeric',
             'radius' => 'sometimes|numeric',
         ]);
 
-        // check validation
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
@@ -831,26 +900,10 @@ class PostController extends Controller
             ], 422);
         }
 
-        // Optional: Limit search range in kilometers
-        $radiusInKm = $request->radius ?? 10;
+        $lat = $request->lat;
+        $lng = $request->lng;
+        $radiusInKm = $request->radius ?? 10; // default 10km
 
-        // Step 1: Get coordinates from location (from posts table)
-        $centerPost = Post::where('location', 'like', "%{$request->location}%")
-            ->whereNotNull('lat')
-            ->whereNotNull('lng')
-            ->first();
-
-        if (!$centerPost) {
-            return response()->json([
-                'status' => false,
-                'message' => 'No posts found in this location'
-            ]);
-        }
-
-        $lat = $centerPost->lat;
-        $lng = $centerPost->lng;
-
-        // Step 2: Fetch nearby restaurants using Haversine Formula
         $restaurants = Post::select(
             'restaurant_name',
             'location',
@@ -859,12 +912,12 @@ class PostController extends Controller
             DB::raw('COUNT(*) as post_count'),
             DB::raw('AVG(rating) as average_rating'),
             DB::raw("(
-                6371 * acos(
-                    cos(radians($lat)) * cos(radians(lat)) *
-                    cos(radians(lng) - radians($lng)) +
-                    sin(radians($lat)) * sin(radians(lat))
-                )
-            ) AS distance")
+            6371 * acos(
+                cos(radians($lat)) * cos(radians(lat)) *
+                cos(radians(lng) - radians($lng)) +
+                sin(radians($lat)) * sin(radians(lat))
+            )
+        ) AS distance")
         )
             ->whereNotNull('restaurant_name')
             ->where('have_it', 'Restaurant')
@@ -876,7 +929,7 @@ class PostController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => "Nearby Restaurants from: " . $request->location,
+            'message' => "Nearby Restaurants within {$radiusInKm}km",
             'center' => [
                 'lat' => $lat,
                 'lng' => $lng,
@@ -884,4 +937,5 @@ class PostController extends Controller
             'data' => $restaurants
         ]);
     }
+
 }
