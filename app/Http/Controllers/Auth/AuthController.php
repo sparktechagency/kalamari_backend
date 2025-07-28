@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
+use PhpParser\JsonDecoder;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Exceptions\TokenExpiredException;
 use Tymon\JWTAuth\Exceptions\TokenInvalidException;
@@ -639,8 +640,7 @@ class AuthController extends Controller
     {
         // Validate contact_lists as array
         $validator = Validator::make($request->all(), [
-            'contact_lists' => 'required|array|min:1',
-            'contact_lists.*' => 'string'
+            'contact_lists' => 'required'
         ]);
 
         if ($validator->fails()) {
@@ -663,49 +663,79 @@ class AuthController extends Controller
         ]);
     }
 
-    public function searchContact(Request $request)
+    // public function searchContact(Request $request)
+    // {
+    //     $search = $request->search_number;
+
+    //     $contact = Contact::where('user_id', Auth::id())->first();
+
+    //     if (!$contact) {
+    //         return response()->json([
+    //             'status' => false,
+    //             'message' => 'No contact list found',
+    //             'data' => []
+    //         ]);
+    //     }
+
+    //     // Clean contact_lists string
+    //     $contact_lists = trim($contact->contact_lists);
+
+    //     // Step 1: Remove unwanted characters: quotes, brackets, curly braces
+    //     $cleaned = str_replace(['[', ']', '{', '}', '"', '\''], '', $contact_lists);
+
+    //     // Step 2: Split by comma
+    //     $contactArray = array_map('trim', explode(',', $cleaned));
+
+    //     // Step 3: If search given, filter
+    //     if ($search) {
+    //         $matched = array_filter($contactArray, function ($number) use ($search) {
+    //             return str_contains($number, $search);
+    //         });
+
+    //         return response()->json([
+    //             'status' => !empty($matched),
+    //             'message' => !empty($matched) ? 'Number found' : 'Number not found',
+    //             'data' => array_values($matched)
+    //         ]);
+    //     }
+
+    //     // No search, return all
+    //     return response()->json([
+    //         'status' => true,
+    //         'message' => 'All contact numbers',
+    //         'data' => $contactArray
+    //     ]);
+
+    // }
+
+
+    public function synContacts(Request $request)
     {
-        $search = $request->search_number;
 
-        $contact = Contact::where('user_id', Auth::id())->first();
-
-        if (!$contact) {
-            return response()->json([
-                'status' => false,
-                'message' => 'No contact list found',
-                'data' => []
-            ]);
-        }
-
-        // Clean contact_lists string
-        $contact_lists = trim($contact->contact_lists);
-
-        // Step 1: Remove unwanted characters: quotes, brackets, curly braces
-        $cleaned = str_replace(['[', ']', '{', '}', '"', '\''], '', $contact_lists);
-
-        // Step 2: Split by comma
-        $contactArray = array_map('trim', explode(',', $cleaned));
-
-        // Step 3: If search given, filter
-        if ($search) {
-            $matched = array_filter($contactArray, function ($number) use ($search) {
-                return str_contains($number, $search);
-            });
-
-            return response()->json([
-                'status' => !empty($matched),
-                'message' => !empty($matched) ? 'Number found' : 'Number not found',
-                'data' => array_values($matched)
-            ]);
-        }
-
-        // No search, return all
-        return response()->json([
-            'status' => true,
-            'message' => 'All contact numbers',
-            'data' => $contactArray
+        // Step 1: Validate request
+        $validator = Validator::make($request->all(), [
+            'contact_lists' => 'required'
         ]);
 
-    }
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
 
+        $contactNumbers = json_decode($request->contact_lists);
+
+        // Step 4: Query matching users, excluding the current one
+        $matchedUsers = User::whereIn('contact_number', $contactNumbers)
+            ->where('id', '!=', Auth::id())
+            ->where('role', 'USER')
+            ->get();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Matched registered users from contact list',
+            'data' => $matchedUsers
+        ]);
+    }
 }

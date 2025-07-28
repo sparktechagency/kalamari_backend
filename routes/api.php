@@ -37,6 +37,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/update-password', [AuthController::class, 'updatePassword']);
     Route::post('/store-contact', [AuthController::class, 'storeContact']);
     Route::get('/search-contact', [AuthController::class, 'searchContact']);
+    Route::get('/syn-contacts', [AuthController::class, 'synContacts']);
 
     // notification
     Route::get('/get-notifications', [NotificationController::class, 'getNotifications']);
