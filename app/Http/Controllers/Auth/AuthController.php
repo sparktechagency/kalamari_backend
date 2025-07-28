@@ -711,8 +711,6 @@ class AuthController extends Controller
 
     public function synContacts(Request $request)
     {
-
-        // Step 1: Validate request
         $validator = Validator::make($request->all(), [
             'contact_lists' => 'required'
         ]);
@@ -724,9 +722,8 @@ class AuthController extends Controller
             ], 422);
         }
 
-        $contactNumbers = json_decode($request->contact_lists);
+        $contactNumbers = $request->contact_lists;
 
-        // Step 4: Query matching users, excluding the current one
         $matchedUsers = User::whereIn('contact_number', $contactNumbers)
             ->where('id', '!=', Auth::id())
             ->where('role', 'USER')
