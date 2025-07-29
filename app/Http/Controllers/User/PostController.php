@@ -905,6 +905,7 @@ class PostController extends Controller
         $radiusInKm = $request->radius ?? 10; // default 10km
 
         $restaurants = Post::select(
+            DB::raw('MIN(id) as id'),
             'restaurant_name',
             'location',
             'latitude',
@@ -927,7 +928,23 @@ class PostController extends Controller
             ->orderBy('distance')
             ->get();
 
-            
+        if ($request->has('id')) {
+            $restaurant = collect($restaurants)->firstWhere('id', $request->id);
+
+            if ($restaurant) {
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Single restaurant found',
+                    'data' => $restaurant
+                ]);
+            } else {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Restaurant not found',
+                    'data' => null
+                ]);
+            }
+        }
 
         return response()->json([
             'status' => true,
@@ -938,6 +955,75 @@ class PostController extends Controller
             ],
             'data' => $restaurants
         ]);
+    }
+
+    public function viewRestaurant(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'id' => 'required',
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+            'radius' => 'sometimes|numeric',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors()
+            ], 422);
+        }
+
+        $lat = $request->latitude;
+        $lng = $request->longitude;
+        $radiusInKm = $request->radius ?? 10; // default 10km
+
+        $restaurants = Post::select(
+            DB::raw('MIN(id) as id'),
+            'restaurant_name',
+            'location',
+            'latitude',
+            'longitude',
+            DB::raw('COUNT(*) as post_count'),
+            DB::raw('AVG(rating) as average_rating'),
+            DB::raw("(
+            6371 * acos(
+                cos(radians($lat)) * cos(radians(latitude)) *
+                cos(radians(longitude) - radians($lng)) +
+                sin(radians($lat)) * sin(radians(latitude))
+            )
+        ) AS distance")
+        )
+            ->whereNotNull('restaurant_name')
+            ->where('have_it', 'Restaurant')
+            ->where('post_status', 'approved')
+            ->groupBy('restaurant_name', 'location', 'latitude', 'longitude')
+            ->having('distance', '<=', $radiusInKm)
+            ->orderBy('distance')
+            ->get();
+
+        if (!$restaurants) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Restaurant not found',
+                'data' => null
+            ], 404);
+        }
+
+        $restaurant = collect($restaurants)->firstWhere('id', $request->id);
+
+        if ($restaurant) {
+            return response()->json([
+                'status' => true,
+                'message' => 'Single restaurant found',
+                'data' => $restaurant
+            ]);
+        } else {
+            return response()->json([
+                'status' => false,
+                'message' => 'Restaurant not found',
+                'data' => null
+            ]);
+        }
     }
 
 }

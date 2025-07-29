@@ -97,6 +97,8 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/following', [PostController::class, 'following']);
         Route::get('/user-search', [PostController::class, 'userSearch']);
         Route::get('/restaurant-search', [PostController::class, 'restaurantSearch']);
+        Route::get('/view-restaurant/{id?}', [PostController::class, 'viewRestaurant']);
+
 
         // post
         Route::post('/create-post', [PostController::class, 'createPost']);
