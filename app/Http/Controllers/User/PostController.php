@@ -948,12 +948,12 @@ class PostController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => "Nearby Restaurants within {$radiusInKm}km",
+            'message' => $request->radius ? "Nearby Restaurants within {$radiusInKm}km":'Search by latitude longitude',
             'center' => [
                 'latitude' => $lat,
                 'longitude' => $lng,
             ],
-            'data' => $restaurants
+            'data' => $request->radius ? $restaurants : $restaurants->first()   
         ]);
     }
 
