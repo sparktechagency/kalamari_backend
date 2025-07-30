@@ -67,6 +67,7 @@ class AuthController extends Controller
             'full_name' => 'required|string|max:255',
             'user_name' => 'sometimes|max:255',
             'email' => 'required|string|email|max:255|unique:users,email',
+            'contact_number' => 'required',
             'password' => 'required|string|min:6|confirmed',
         ]);
 
@@ -83,6 +84,7 @@ class AuthController extends Controller
             // 'user_name' => $request->user_name ? '@' . ucfirst($request->user_name) . '_' . rand(0, 9) : '@' . explode(' ', trim($request->full_name))[0] . '_' . rand(0, 9),
             'user_name' => $request->user_name,
             'email' => $request->email,
+            'contact_number' => $request->contact_number,
             'password' => Hash::make($request->password),
             'otp' => $otp,
             'otp_expires_at' => $otp_expires_at,
