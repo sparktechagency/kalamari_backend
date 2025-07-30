@@ -24,8 +24,9 @@ class ProfileController extends Controller
         // validation roles
         $validator = Validator::make($request->all(), [
             'avatar' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048', // 2MB max
-            'name' => 'sometimes|string|max:255',
-            'bio' => 'sometimes|string',
+            'name' => 'nullable|string|max:255',
+            'bio' => 'nullable|string',
+            'contact_number' => 'nullable',
         ]);
 
         // check validation
@@ -65,9 +66,10 @@ class ProfileController extends Controller
 
 
         // update user name and bio
-        $user->name = ucfirst($request->name);
+        $user->name = ucfirst($request->name) ?? ucfirst($user->name);
         // $user->user_name = '@' . explode(' ', trim(ucfirst($request->name)))[0] . '_' . rand(0, 9);
-        $user->bio = $request->bio;
+        $user->bio = $request->bio ?? $user->bio;
+        $user->contact_number = $request->contact_number ?? $user->contact_number;
         $user->save();
 
         return response()->json([
@@ -312,7 +314,7 @@ class ProfileController extends Controller
     public function deleteRecent(Request $request)
     {
         $user = Auth::user();
-        
+
 
         $post = Post::where('id', $request->post_id)
             ->where('user_id', $user->id)

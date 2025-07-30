@@ -904,32 +904,45 @@ class PostController extends Controller
         $lng = $request->longitude;
         $radiusInKm = $request->radius ?? 10; // default 10km
 
-        $restaurants = Post::select(
-            DB::raw('MIN(id) as id'),
-            'restaurant_name',
-            'location',
-            'latitude',
-            'longitude',
-            DB::raw('COUNT(*) as post_count'),
-            DB::raw('AVG(rating) as average_rating'),
-            DB::raw("(
+
+        // Subquery: সর্বোচ্চ rating এর post.id প্রতি restaurant group এ
+        $subquery = DB::table('posts as p1')
+            ->select('p1.id')
+            ->whereRaw('p1.restaurant_name = p2.restaurant_name')
+            ->orderByDesc('p1.rating')
+            ->limit(1);
+
+        // Main Query
+        $restaurants = DB::table('posts as p2')
+            ->select(
+                DB::raw("({$subquery->toSql()}) as id"),
+                'p2.photo',
+                'p2.restaurant_name',
+                'p2.location',
+                'p2.latitude',
+                'p2.longitude',
+                DB::raw('COUNT(*) as post_count'),
+                DB::raw('AVG(p2.rating) as average_rating'),
+                DB::raw("(
             6371 * acos(
-                cos(radians($lat)) * cos(radians(latitude)) *
-                cos(radians(longitude) - radians($lng)) +
-                sin(radians($lat)) * sin(radians(latitude))
+                cos(radians($lat)) * cos(radians(p2.latitude)) *
+                cos(radians(p2.longitude) - radians($lng)) +
+                sin(radians($lat)) * sin(radians(p2.latitude))
             )
         ) AS distance")
-        )
-            ->whereNotNull('restaurant_name')
-            ->where('have_it', 'Restaurant')
-            ->where('post_status', 'approved')
-            ->groupBy('restaurant_name', 'location', 'latitude', 'longitude')
+            )
+            ->whereNotNull('p2.restaurant_name')
+            ->where('p2.have_it', 'Restaurant')
+            ->where('p2.post_status', 'approved')
+            ->groupBy('p2.photo', 'p2.restaurant_name', 'p2.location', 'p2.latitude', 'p2.longitude')
             ->having('distance', '<=', $radiusInKm)
             ->orderBy('distance')
             ->get();
 
         if ($request->has('id')) {
             $restaurant = collect($restaurants)->firstWhere('id', $request->id);
+
+            $restaurant->photo = json_decode($restaurant->photo, true);
 
             if ($restaurant) {
                 return response()->json([
@@ -946,84 +959,20 @@ class PostController extends Controller
             }
         }
 
+        foreach ($restaurants as $restaurant) {
+            $restaurant->photo = json_decode($restaurant->photo, true);
+        }
+
         return response()->json([
             'status' => true,
-            'message' => $request->radius ? "Nearby Restaurants within {$radiusInKm}km":'Search by latitude longitude',
+            'message' => $request->radius ? "Nearby Restaurants within {$radiusInKm}km" : 'Search by latitude longitude',
+            'latest_post_images' => '',
             'center' => [
                 'latitude' => $lat,
                 'longitude' => $lng,
             ],
-            'data' => $request->radius ? $restaurants : $restaurants->first()   
+            'data' => $request->radius ? $restaurants : $restaurants->first()
         ]);
-    }
-
-    public function viewRestaurant(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'id' => 'required',
-            'latitude' => 'required|numeric',
-            'longitude' => 'required|numeric',
-            'radius' => 'sometimes|numeric',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'message' => $validator->errors()
-            ], 422);
-        }
-
-        $lat = $request->latitude;
-        $lng = $request->longitude;
-        $radiusInKm = $request->radius ?? 10; // default 10km
-
-        $restaurants = Post::select(
-            DB::raw('MIN(id) as id'),
-            'restaurant_name',
-            'location',
-            'latitude',
-            'longitude',
-            DB::raw('COUNT(*) as post_count'),
-            DB::raw('AVG(rating) as average_rating'),
-            DB::raw("(
-            6371 * acos(
-                cos(radians($lat)) * cos(radians(latitude)) *
-                cos(radians(longitude) - radians($lng)) +
-                sin(radians($lat)) * sin(radians(latitude))
-            )
-        ) AS distance")
-        )
-            ->whereNotNull('restaurant_name')
-            ->where('have_it', 'Restaurant')
-            ->where('post_status', 'approved')
-            ->groupBy('restaurant_name', 'location', 'latitude', 'longitude')
-            ->having('distance', '<=', $radiusInKm)
-            ->orderBy('distance')
-            ->get();
-
-        if (!$restaurants) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Restaurant not found',
-                'data' => null
-            ], 404);
-        }
-
-        $restaurant = collect($restaurants)->firstWhere('id', $request->id);
-
-        if ($restaurant) {
-            return response()->json([
-                'status' => true,
-                'message' => 'Single restaurant found',
-                'data' => $restaurant
-            ]);
-        } else {
-            return response()->json([
-                'status' => false,
-                'message' => 'Restaurant not found',
-                'data' => null
-            ]);
-        }
     }
 
 }
