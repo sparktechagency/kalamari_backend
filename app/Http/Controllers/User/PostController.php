@@ -189,7 +189,8 @@ class PostController extends Controller
             ->whereIn('user_id', $followings_id)
             ->latest() // add latest
             // ->inRandomOrder() // 🔀 ORDER BY RAND()/RANDOM() of sql
-            ->paginate($request->per_page ?? 10);
+            // ->paginate($request->per_page ?? 10);
+            ->get();
 
         // every post status add
         $followings->getCollection()->transform(function ($post) {
@@ -669,7 +670,8 @@ class PostController extends Controller
         $latestPosts = Post::whereNotIn('user_id', $blockedUserIds)
             ->orderByDesc('love_reacts')
             ->orderByDesc('created_at') // fallback, if, love_reacts is equal
-            ->paginate($perPage);
+            // ->paginate($perPage);
+            ->get();
 
         if ($latestPosts->isEmpty()) {
             return response()->json([
