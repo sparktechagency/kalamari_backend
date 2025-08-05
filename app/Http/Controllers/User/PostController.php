@@ -158,11 +158,11 @@ class PostController extends Controller
             ->whereIn('user_id', $followings_id)
             ->latest() // add latest
             // ->inRandomOrder() // 🔀 ORDER BY RAND()/RANDOM() of sql
-            // ->paginate($request->per_page ?? 10);
-            ->get();
+            ->paginate($request->per_page ?? 10);
+            // ->get();
 
         // every post status add
-        $followings->transform(function ($post) {
+        $followings->getCollection()->transform(function ($post) {
             $post->tagged = json_decode($post->tagged);
             $post->photo = json_decode($post->photo);
             $post->status = 'Following'; //  status add (no database store)
@@ -208,8 +208,8 @@ class PostController extends Controller
         $latestPosts = Post::whereNotIn('user_id', $blockedUserIds)
             ->orderByDesc('love_reacts')
             ->orderByDesc('created_at') // fallback, if, love_reacts is equal
-            // ->paginate($perPage);
-        ->get();
+            ->paginate($perPage);
+        // ->get();
 
         if ($latestPosts->isEmpty()) {
             return response()->json([
@@ -221,7 +221,7 @@ class PostController extends Controller
         $followingIds = Follower::where('follower_id', $authId)->pluck('user_id')->toArray();
 
         // Transform
-        $latestPosts->transform(function ($post) use ($authId, $followingIds) {
+        $latestPosts->getCollection()->transform(function ($post) use ($authId, $followingIds) {
             $post->tagged = json_decode($post->tagged);
             $post->photo = json_decode($post->photo);
 

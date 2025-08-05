@@ -58,12 +58,12 @@ class CommentController extends Controller
         // post user
         $post_user_id = Post::where('id', $request->post_id)->first()->user_id;
 
-        $notifyUser = User::where('id',$post_user_id)->first();
+        $notifyUser = User::where('id', $post_user_id)->first();
 
         // Notify post user
         $notifyUser->notify(new NewCommentNotification($comment));
 
-        
+
 
         return response()->json([
             'status' => true,
@@ -370,8 +370,15 @@ class CommentController extends Controller
 
     public function getCommentWithReplayLike(Request $request)
     {
-        $authId = Auth::id(); // যিনি login আছেন
-        $posts = Post::with(['comments.user', 'comments.replies.user'])
+        $authId = Auth::id();
+
+        $posts = Post::with([
+            'comments.user',
+            'comments.replies' => function ($query) {
+                $query->latest();
+            },
+            'comments.replies.user',
+        ])
             ->where('id', $request->post_id)
             ->get();
 
@@ -435,7 +442,7 @@ class CommentController extends Controller
                 ->where('user_id', $authId)
                 ->exists();
 
-            // Comments
+            // Comments 
             $post->comments->transform(function ($comment) use ($authId) {
                 $replies = $comment->replies->map(function ($reply) use ($authId) {
                     return [
