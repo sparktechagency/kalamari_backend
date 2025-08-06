@@ -28,9 +28,9 @@ class PostController extends Controller
             'have_it' => 'required|string|in:1,2', // নিশ্চিতভাবে 1 বা 2 হতে হবে
             'restaurant_name' => 'nullable|string',
             'food_type' => 'required|string',
-            'location' => 'required|string',
-            'lat' => 'required|string',
-            'lng' => 'required|string',
+            'location' => 'nullable|string',
+            'lat' => 'nullable|string',
+            'lng' => 'nullable|string',
             'description' => 'required|string',
             'rating' => 'nullable|string',
             'tagged' => 'sometimes|array',
@@ -44,9 +44,15 @@ class PostController extends Controller
                 if (!$request->restaurant_name) {
                     $validator->errors()->add('restaurant_name', 'The restaurant name field is required when have_it is 1.');
                 }
-                // if (!$request->location) {
-                //     $validator->errors()->add('location', 'The location field is required when have_it is 1.');
-                // }
+                if (!$request->location) {
+                    $validator->errors()->add('location', 'The location field is required when have_it is 1.');
+                }
+                if (!$request->lat) {
+                    $validator->errors()->add('lat', 'The lat field is required when have_it is 1.');
+                }
+                if (!$request->lng) {
+                    $validator->errors()->add('lng', 'The lng field is required when have_it is 1.');
+                }
                 if (!$request->rating) {
                     $validator->errors()->add('rating', 'The rating field is required when have_it is 1.');
                 }
@@ -158,11 +164,11 @@ class PostController extends Controller
             ->whereIn('user_id', $followings_id)
             ->latest() // add latest
             // ->inRandomOrder() // 🔀 ORDER BY RAND()/RANDOM() of sql
-            ->paginate($request->per_page ?? 10);
-            // ->get();
+            // ->paginate($request->per_page ?? 10);
+            ->get();
 
         // every post status add
-        $followings->getCollection()->transform(function ($post) {
+        $followings->transform(function ($post) {
             $post->tagged = json_decode($post->tagged);
             $post->photo = json_decode($post->photo);
             $post->status = 'Following'; //  status add (no database store)
@@ -208,8 +214,8 @@ class PostController extends Controller
         $latestPosts = Post::whereNotIn('user_id', $blockedUserIds)
             ->orderByDesc('love_reacts')
             ->orderByDesc('created_at') // fallback, if, love_reacts is equal
-            ->paginate($perPage);
-        // ->get();
+            // ->paginate($perPage);
+        ->get();
 
         if ($latestPosts->isEmpty()) {
             return response()->json([
@@ -221,7 +227,7 @@ class PostController extends Controller
         $followingIds = Follower::where('follower_id', $authId)->pluck('user_id')->toArray();
 
         // Transform
-        $latestPosts->getCollection()->transform(function ($post) use ($authId, $followingIds) {
+        $latestPosts->transform(function ($post) use ($authId, $followingIds) {
             $post->tagged = json_decode($post->tagged);
             $post->photo = json_decode($post->photo);
 
