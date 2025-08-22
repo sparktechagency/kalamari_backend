@@ -101,7 +101,7 @@ class ProfileController extends Controller
             'message' => $request->user_id ? 'User who following' : 'Who I am following',
             // 'following_count' => formatCount(count($followings)),
             'following_count' => kmCount(count($followings)),
-            'data' => !$request->user_id ? $followings : null
+            'data' => $followings
         ]);
     }
 
@@ -127,7 +127,7 @@ class ProfileController extends Controller
             'status' => true,
             'message' => $request->user_id ? 'User followers' : 'My followers',
             'follower_count' => kmCount(count($followers)),
-            'data' => !$request->user_id ? $followers : null
+            'data' => $followers
         ]);
     }
 
