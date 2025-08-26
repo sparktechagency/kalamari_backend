@@ -34,8 +34,8 @@ class PostController extends Controller
             'description' => 'required|string',
             'rating' => 'nullable|string',
             'tagged' => 'sometimes|array',
-            'images' => 'required|array|max:5', // max 3 image
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'images' => 'required|array|max:5', // max 5 image
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:10240',
         ]);
 
         // Custom conditional validation after base validation
