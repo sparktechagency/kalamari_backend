@@ -23,7 +23,7 @@ class ProfileController extends Controller
     {
         // validation roles
         $validator = Validator::make($request->all(), [
-            'avatar' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048', // 2MB max
+            'avatar' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:20480', // 20MB max
             'name' => 'nullable|string|max:255',
             'bio' => 'nullable|string',
             'contact_number' => 'nullable',

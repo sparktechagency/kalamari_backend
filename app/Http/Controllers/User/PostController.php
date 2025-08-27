@@ -25,7 +25,7 @@ class PostController extends Controller
         // validation roles
         $validator = Validator::make($request->all(), [
             'meal_name' => 'required|string',
-            'have_it' => 'required|string|in:1,2', // নিশ্চিতভাবে 1 বা 2 হতে হবে
+            'have_it' => 'required|string|in:1,2',
             'restaurant_name' => 'nullable|string',
             'food_type' => 'required|string',
             'location' => 'nullable|string',
@@ -34,8 +34,8 @@ class PostController extends Controller
             'description' => 'required|string',
             'rating' => 'nullable|string',
             'tagged' => 'sometimes|array',
-            'images' => 'required|array|max:5', // max 5 image
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:10240',
+            'images' => 'required|array|max:5',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif,svg|max:20480',
         ]);
 
         // Custom conditional validation after base validation

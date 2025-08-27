@@ -539,7 +539,7 @@ class AuthController extends Controller
 
 
         $validator = Validator::make($request->all(), [
-            'avatar' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', // 2MB max
+            'avatar' => 'required|image|mimes:jpeg,png,jpg,gif|max:20480', // 2MB max
         ]);
 
         if ($validator->fails()) {
@@ -576,7 +576,7 @@ class AuthController extends Controller
         $user = User::findOrFail(Auth::id());
 
         $validator = Validator::make($request->all(), [
-            'avatar' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', // 2MB max
+            'avatar' => 'required|image|mimes:jpeg,png,jpg,gif|max:20480', // 2MB max
         ]);
 
         if ($validator->fails()) {
