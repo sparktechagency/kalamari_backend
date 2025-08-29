@@ -118,6 +118,10 @@ class CommentController extends Controller
     {
         $comments = Comment::where('post_id', $request->post_id)->latest()->get();
 
+        // foreach ($comments as $comment) {
+        //     $comment->post_user_id = Post::where('id',$comment->post_id)->first()->user_id;
+        // }
+
         return response()->json([
             'status' => true,
             'message' => 'get comment by post',
@@ -372,6 +376,12 @@ class CommentController extends Controller
     {
         $authId = Auth::id();
 
+        $post_user_id = Post::where('id', $request->post_id)->first()->user_id;
+
+        if ($post_user_id == Auth::id()) {
+            $showDeleteButton = true;
+        }
+
         $posts = Post::with([
             'comments.user',
             'comments.replies' => function ($query) {
@@ -383,6 +393,7 @@ class CommentController extends Controller
             ->get();
 
         // $posts->transform(function ($post) use ($authId) {
+
         //     $post->tagged = json_decode($post->tagged);
         //     $post->photo = json_decode($post->photo);
 
@@ -427,6 +438,57 @@ class CommentController extends Controller
         // });
 
 
+        // $posts->transform(function ($post) use ($authId,$showDeleteButton) {
+        //     $post->tagged = json_decode($post->tagged);
+        //     $post->photo = json_decode($post->photo);
+
+
+
+        //     // Total comment count
+        //     $post->comment_count = kmCount($post->comments->count());
+
+        //     // ❤️ love_reacts কেঃ 1.5K / 2M এ রূপান্তর করো
+        //     $post->love_reacts = kmCount($post->love_reacts ?? 0);
+
+        //     // IsHeart
+        //     $post->isHeart = Heart::where('post_id', $post->id)
+        //         ->where('user_id', $authId)
+        //         ->exists();
+
+        //     // Comments 
+        //     $post->comments->transform(function ($comment) use ($authId,$showDeleteButton) {
+        //         $replies = $comment->replies->map(function ($reply) use ($authId) {
+        //             return [
+        //                 'id' => $reply->id,
+        //                 'user_id' => $reply->user_id,
+        //                 'user_name' => $reply->user->name ?? null,
+        //                 'avatar' => $reply->user->avatar ?? null,
+        //                 'replay' => $reply->replay,
+        //                 'created_at' => $reply->created_at,
+        //             ];
+        //         });
+
+        //         return [
+        //             'id' => $comment->id,
+        //             'post_id' => $comment->post_id,
+        //             'user_id' => $comment->user_id,
+        //             'user_name' => $comment->user->name ?? null,
+        //             'avatar' => $comment->user->avatar ?? null,
+        //             'comment' => $comment->comment,
+        //             'like' => kmCount($comment->like),
+        //             'reply_count' => kmCount($comment->replies->count()),
+        //             'replies' => $replies,
+        //             'showDeleteButton' => $showDeleteButton,
+        //             'created_at' => $comment->created_at,
+        //             'updated_at' => $comment->updated_at,
+        //         ];
+        //     });
+
+        //     return $post;
+        // });
+
+
+
         $posts->transform(function ($post) use ($authId) {
             $post->tagged = json_decode($post->tagged);
             $post->photo = json_decode($post->photo);
@@ -443,8 +505,8 @@ class CommentController extends Controller
                 ->exists();
 
             // Comments 
-            $post->comments->transform(function ($comment) use ($authId) {
-                $replies = $comment->replies->map(function ($reply) use ($authId) {
+            $post->comments->transform(function ($comment) use ($authId, $post) {
+                $replies = $comment->replies->map(function ($reply) {
                     return [
                         'id' => $reply->id,
                         'user_id' => $reply->user_id,
@@ -454,6 +516,9 @@ class CommentController extends Controller
                         'created_at' => $reply->created_at,
                     ];
                 });
+
+                // ✅ Show delete button if logged-in user is post owner OR comment owner
+                $showDeleteButton = ($post->user_id == $authId || $comment->user_id == $authId);
 
                 return [
                     'id' => $comment->id,
@@ -465,6 +530,7 @@ class CommentController extends Controller
                     'like' => kmCount($comment->like),
                     'reply_count' => kmCount($comment->replies->count()),
                     'replies' => $replies,
+                    'showDeleteButton' => $showDeleteButton,
                     'created_at' => $comment->created_at,
                     'updated_at' => $comment->updated_at,
                 ];
