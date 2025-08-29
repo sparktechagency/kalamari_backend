@@ -297,6 +297,7 @@ class AuthController extends Controller
         if ($user->verified_status != 'verified') {
             return response()->json([
                 'status' => false,
+                'un_verified' => true,
                 'message' => 'Your account is unverified. Please contact support.',
             ], 403);
         }
