@@ -20,6 +20,8 @@ class User extends Authenticatable implements JWTSubject
      */
     protected $guarded = ['id'];
 
+     protected $appends = ['avatar_url'];
+
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -28,6 +30,7 @@ class User extends Authenticatable implements JWTSubject
     protected $hidden = [
         'password',
         'remember_token',
+        'avatar'
     ];
 
     /**
@@ -71,4 +74,12 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasOne(Post::class)->where('post_status', 'approved')->latest();
     }
     
+
+    public function getAvatarUrlAttribute()
+    {
+        return $this->avatar
+            ? asset($this->avatar)
+            : 'https://ui-avatars.com/api/?background=random&name=' . urlencode($this->name);
+    }
+
 }
