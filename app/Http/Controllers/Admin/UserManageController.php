@@ -50,7 +50,7 @@ class UserManageController extends Controller
         $users->getCollection()->transform(function ($user) {
             return [
                 'id' => $user->id,
-                'avatar' => $user->avatar ?? null,
+                'avatar_url' => $user->avatar_url,
                 'name' => $user->name,
                 'email' => $user->email,
                 'verified_status' => $user->verified_status

@@ -30,7 +30,7 @@ class PostManageController extends Controller
             return [
                 'post_id' => $post->id,
                 'user_id' => $post->user_id,
-                'avatar' => $post->user->avatar ?? null,
+                'avatar_url' => $post->user->avatar_url,
                 'name' => $post->user->name ?? null,
                 'location' => $post->location,
                 'food_type' => $post->food_type,
@@ -58,7 +58,7 @@ class PostManageController extends Controller
         $post->photo = json_decode($post->photo, true);
         $post->tagged = json_decode($post->tagged, true);
         $post->commentCounts = Comment::where('post_id', $post->id)->get()->count();
-        $post->avatar = User::where('id',$post->user_id)->first()->avatar;
+        $post->avatar_url = User::where('id',$post->user_id)->first()->avatar_url;
 
         return response()->json([
             'status'=> true,
