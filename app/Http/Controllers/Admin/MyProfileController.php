@@ -59,7 +59,7 @@ class MyProfileController extends Controller
 
         // update user name and bio
         $user->name = $request->name ?? $user->name;
-        $user->last_name = $request->last_name ?? $user->last_name;
+        $user->last_name = $request->last_name ?? null;
         $user->contact_number = $request->contact_number ?? $user->contact_number;
         $user->location = $request->location ?? $user->location;
         $user->save();
