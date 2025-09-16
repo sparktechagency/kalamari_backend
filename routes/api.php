@@ -25,6 +25,7 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/check-token', [AuthController::class, 'checkToken']);
 
+
 Route::middleware('auth:api')->group(function () {
     // private route for user
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -34,6 +35,7 @@ Route::middleware('auth:api')->group(function () {
     Route::post('/store-contact', [AuthController::class, 'storeContact']);
     Route::get('/search-contact', [AuthController::class, 'searchContact']);
     Route::get('/syn-contacts', [AuthController::class, 'synContacts']);
+    Route::delete('/delete-account', [AuthController::class, 'deleteAccount']);
 
     // notification
     Route::get('/get-notifications', [NotificationController::class, 'getNotifications']);
