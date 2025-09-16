@@ -59,7 +59,7 @@ class MyProfileController extends Controller
 
         // update user name and bio
         $user->name = $request->name ?? $user->name;
-        $user->last_name = $request->last_name ?? '';
+        $user->last_name = $request->last_name ?? $user->last_name;
         $user->contact_number = $request->contact_number ?? $user->contact_number;
         $user->location = $request->location ?? $user->location;
         $user->save();
@@ -81,6 +81,9 @@ class MyProfileController extends Controller
                 'message' => 'User not found',
             ]);
         }
+
+        $admin->last_name = $admin->last_name == null ? '' : $admin->last_name;
+        $admin->location = $admin->location == null ? '' : $admin->location;
 
         return response()->json([
             'status' => true,
