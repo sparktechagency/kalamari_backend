@@ -59,7 +59,7 @@ class User extends Authenticatable implements JWTSubject
     // যাদের follow করছে (যাকে follow করছে তারা)
     public function followers()
     {
-        return $this->hasMany(follower::class);
+        return $this->hasMany(Follower::class);
     }
 
     // App\Models\User.php
