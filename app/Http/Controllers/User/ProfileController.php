@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use App\Models\follower;
+use App\Models\Follower;
 use App\Models\Post;
 use App\Models\RecentPost;
 use App\Models\User;
