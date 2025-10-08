@@ -192,8 +192,4 @@ class UserAnalyticsController extends Controller
             ]
         ]);
     }
-
-
-
-
 }
