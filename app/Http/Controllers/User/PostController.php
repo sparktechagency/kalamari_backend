@@ -35,7 +35,7 @@ class PostController extends Controller
             'rating' => 'nullable|string',
             'tagged' => 'sometimes|array',
             'images' => 'required|array|max:5',
-            'images.*' => 'image|mimes:jpeg,png,jpg,webp,gif,svg|max:20480',
+            'images.*' => 'image|mimes:jpeg,png,jpg,webp,gif,svg|max:51200', //50mb
         ]);
 
         // Custom conditional validation after base validation
@@ -164,8 +164,8 @@ class PostController extends Controller
             ->whereIn('user_id', $followings_id)
             ->latest() // add latest
             // ->inRandomOrder() // 🔀 ORDER BY RAND()/RANDOM() of sql
-            // ->paginate($request->per_page ?? 10);
-            ->get();
+            ->paginate($request->per_page ?? 10);
+        // ->get();
 
         // every post status add
         $followings->transform(function ($post) {
@@ -214,8 +214,8 @@ class PostController extends Controller
         $latestPosts = Post::whereNotIn('user_id', $blockedUserIds)
             ->orderByDesc('love_reacts')
             ->orderByDesc('created_at') // fallback, if, love_reacts is equal
-            // ->paginate($perPage);
-        ->get();
+            ->paginate($perPage ?? 10);
+        // ->get();
 
         if ($latestPosts->isEmpty()) {
             return response()->json([
