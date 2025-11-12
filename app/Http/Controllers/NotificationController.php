@@ -51,7 +51,7 @@ class NotificationController extends Controller
     //     ]);
     // }
 
-    public function getNotifications(Request $request)
+    public function getNotifications1(Request $request)
     {
         if (!Auth::check()) {
             return response()->json([
@@ -83,7 +83,7 @@ class NotificationController extends Controller
             });
         } else {
             // Regular user – only latest 10
-            $notifications = $user->notifications()->latest()->take(10)->get();
+            $notifications = $user->notifications()->latest()->paginate($request->per_page ?? 10);
 
             $notifications = $notifications->transform(function ($notification) {
                 $user = User::find($notification->data['user_id']);
@@ -109,6 +109,49 @@ class NotificationController extends Controller
             'data' => $notifications
         ]);
     }
+
+    public function getNotifications(Request $request)
+    {
+        if (!Auth::check()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+
+        $user = Auth::user();
+        $perPage = $request->per_page ?? 10;
+
+        // ✅ Notification query
+        $notifications = $user->notifications()->latest()->paginate($perPage);
+
+        // ✅ Transform each notification inside the paginated collection
+        $notifications->getCollection()->transform(function ($notification) {
+            $sender = User::find($notification->data['user_id']);
+
+            return [
+                'id' => $notification->id,
+                'post_id' => $notification->data['post_id'] ?? null,
+                'user_id' => $notification->data['user_id'] ?? null,
+                'report_id' => $notification->data['report_id'] ?? null,
+                'user_name' => $notification->data['user_name'] ?? '',
+                'avatar' => $sender->avatar ?? null,
+                'message' => $notification->data['message'] ?? '',
+                'created_at' => $notification->created_at,
+                'read_at' => $notification->read_at,
+                'redirect' => $notification->data['redirect'] ?? ''
+            ];
+        });
+
+        // ✅ Return default pagination response with meta
+        return response()->json([
+            'status' => true,
+            'message' => 'Latest notifications',
+            'data' => $notifications
+        ]);
+    }
+
+
 
     // only read
     public function read(Request $request)

@@ -27,6 +27,7 @@ class ProfileController extends Controller
             'name' => 'nullable|string|max:255',
             'bio' => 'nullable|string',
             'contact_number' => 'nullable',
+            'country_code' => 'nullable',
         ]);
 
         // check validation
@@ -70,6 +71,7 @@ class ProfileController extends Controller
         // $user->user_name = '@' . explode(' ', trim(ucfirst($request->name)))[0] . '_' . rand(0, 9);
         $user->bio = $request->bio ?? $user->bio;
         $user->contact_number = $request->contact_number ?? $user->contact_number;
+        $user->country_code = $request->country_code ?? $user->country_code;
         $user->save();
 
         return response()->json([

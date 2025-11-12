@@ -127,16 +127,18 @@ class BookmarkController extends Controller
         // Filter based on have_it
         if ($request->type === '1') {
             $posts = Post::whereIn('id', $bookmarks_id)
+                ->where('have_it', 'Restaurant')
                 ->latest()
-                ->get();
+                ->paginate(10);
         } elseif ($request->type === '2') {
             $posts = Post::whereIn('id', $bookmarks_id)
+                ->where('have_it', 'Home-made')
                 ->latest()
-                ->get();
+                ->paginate(10);
         } else {
             $posts = Post::whereIn('id', $bookmarks_id)
                 ->latest()
-                ->get();
+                ->paginate(10);
         }
 
         // If no post found

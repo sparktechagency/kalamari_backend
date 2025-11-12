@@ -68,6 +68,7 @@ class AuthController extends Controller
             'user_name' => 'sometimes|max:255',
             'email' => 'required|string|email|max:255|unique:users,email',
             'contact_number' => 'required',
+            'country_code' => 'required',
             'password' => 'required|string|min:6|confirmed',
         ]);
 
@@ -85,6 +86,7 @@ class AuthController extends Controller
             'user_name' => $request->user_name,
             'email' => $request->email,
             'contact_number' => $request->contact_number,
+            'country_code' => $request->country_code,
             'password' => Hash::make($request->password),
             'otp' => $otp,
             'otp_expires_at' => $otp_expires_at,
