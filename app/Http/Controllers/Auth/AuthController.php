@@ -69,11 +69,11 @@ class AuthController extends Controller
             'otp_expires_at' => $otp_expires_at,
         ]);
 
-        try {
-            Mail::to($user->email)->send(new VerifyOTPMail($email_otp));
-        } catch (Exception $e) {
-            Log::error($e->getMessage());
-        }
+        Mail::to($user->email)->send(new VerifyOTPMail($email_otp));
+        // try {
+        // } catch (Exception $e) {
+        //     Log::error($e->getMessage());
+        // }
 
         $notifyUser = User::where('role', 'ADMIN')->first();
 
