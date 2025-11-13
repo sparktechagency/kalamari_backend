@@ -39,29 +39,6 @@ class AuthController extends Controller
             'validity' => '10 minute'
         ];
 
-        // rear case handle
-        $rearUser = User::where('email', $request->email)->first();
-
-        // if (($rearUser && $rearUser->verified_status == 'unverified')) {
-
-        //     // update otp and otp expires
-        //     $rearUser->otp = $otp;
-        //     $rearUser->otp_expires_at = $otp_expires_at;
-        //     $rearUser->save();
-
-        //     try {
-        //         Mail::to($rearUser->email)->send(new VerifyOTPMail($email_otp));
-        //     } catch (Exception $e) {
-        //         Log::error($e->getMessage());
-        //     }
-
-        //     // json response
-        //     return response()->json([
-        //         'status' => true,
-        //         'message' => 'Your account already exists, please verify your account, check you email for OTP'
-        //     ], 201);
-        // }
-
         // validation roles
         $validator = Validator::make($request->all(), [
             'full_name' => 'required|string|max:255',
@@ -100,10 +77,8 @@ class AuthController extends Controller
 
         $notifyUser = User::where('role', 'ADMIN')->first();
 
-        // Notify post user
         $notifyUser->notify(new NewUserCreationNotification($user));
 
-        // json response
         return response()->json([
             'status' => true,
             'message' => 'Register successfully, OTP send you email, please verify your account'
