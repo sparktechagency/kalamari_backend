@@ -62,7 +62,7 @@ class MyProfileController extends Controller
         $user->name = $request->name ?? $user->name;
         $user->last_name = $request->last_name ?? $user->last_name;
         $user->contact_number = $request->contact_number ?? $user->contact_number;
-        $user->country_code = $request->country_code ?? $user->country_code;
+        $user->country_code = null;
         $user->location = $request->location ?? $user->location;
         $user->save();
 
