@@ -1,0 +1,75 @@
+<!-- /***
+ ** FCM Token Generator HTML
+ * This file is used to generate FCM token for testing push notifications.
+ * Save the generated token and use it in your backend to send test notifications.
+ */
+*/ -->
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>FCM Token Generator</title>
+    </head>
+    <body>
+        <h1>Firebase Push Notification Test</h1>
+        <p>Check the browser console for your FCM token.</p>
+        <button onclick="requestPermission()">
+            Request Permission & Get Token
+        </button>
+
+        <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js"></script>
+
+        <script>
+            // firebase configuration from firebase console
+            const firebaseConfig = {
+                apiKey: "AIzaSyBxhY_1X6xvwxnOj3vcNhwqCUXKrtjOL-8",
+                authDomain: "kalamari-app-push.firebaseapp.com",
+                projectId: "kalamari-app-push",
+                storageBucket: "kalamari-app-push.firebasestorage.app",
+                messagingSenderId: "435113116648",
+                appId: "1:435113116648:web:1dc520f0a12ae3ac67da5d",
+                measurementId: "G-HK5G1TMYQF",
+            };
+
+            // Firebase initialize
+            firebase.initializeApp(firebaseConfig);
+            const messaging = firebase.messaging();
+
+            function requestPermission() {
+                console.log("Requesting permission...");
+                Notification.requestPermission().then((permission) => {
+                    if (permission === "granted") {
+                        console.log("Notification permission granted.");
+
+                        // firebase cloud messaging VAPID key from firebase console
+                        const vapidKey = "BPDJol__qpZ6ExeXHf3GVbjk11VUmz4kP3kCx3RjN-LbdHseQ4_wMzmovNm4gba_WWLxh9_8TngGZhP6CldwMZE";
+
+                        // Get FCM token
+                        messaging
+                            .getToken({ vapidKey: vapidKey })
+                            .then((currentToken) => {
+                                if (currentToken) {
+                                    console.log("FCM Token:", currentToken);
+                                    alert(
+                                        "Token generated! Check the console."
+                                    );
+                                } else {
+                                    console.log(
+                                        "No registration token available. Request permission to generate one."
+                                    );
+                                }
+                            })
+                            .catch((err) => {
+                                console.log(
+                                    "An error occurred while retrieving token. ",
+                                    err
+                                );
+                            });
+                    } else {
+                        console.log("Unable to get permission to notify.");
+                    }
+                });
+            }
+        </script>
+    </body>
+</html>
