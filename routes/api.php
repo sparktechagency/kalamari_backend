@@ -28,9 +28,6 @@ Route::get('/check-token', [AuthController::class, 'checkToken']);
 
 Route::post('/push/send', [PushNotificationController::class, 'sendPush']);
 
-
-
-
 Route::middleware('auth:api')->group(function () {
     // private route for user
     Route::post('/logout', [AuthController::class, 'logout']);

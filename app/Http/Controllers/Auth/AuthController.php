@@ -25,7 +25,6 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthController extends Controller
 {
-    // user register
     public function register(Request $request)
     {
         // create otp
@@ -85,8 +84,6 @@ class AuthController extends Controller
             'message' => 'Register successfully, OTP send you email, please verify your account'
         ], 201);
     }
-
-    // search user name
     public function searchUserName(Request $request)
     {
         $userName = User::where('user_name', $request->search_user_name)
@@ -99,8 +96,6 @@ class AuthController extends Controller
             'exist' => $userName ? true : false,
         ]);
     }
-
-    // search user email
     public function searchUserEmail(Request $request)
     {
         $userEmail = User::where('email', $request->search_user_email)
@@ -113,8 +108,6 @@ class AuthController extends Controller
             'exist' => $userEmail ? true : false,
         ]);
     }
-
-    // verify otp
     public function verifyOtp(Request $request)
     {
 
@@ -178,8 +171,6 @@ class AuthController extends Controller
             ], 401);
         }
     }
-
-    // resend otp
     public function resendOtp(Request $request)
     {
         // validation roles
@@ -241,8 +232,6 @@ class AuthController extends Controller
             'message' => 'OTP resend to your email'
         ], 200);
     }
-
-    // user login
     public function login(Request $request)
     {
         // Validation Rules
@@ -311,8 +300,6 @@ class AuthController extends Controller
             'user' => $user,
         ], 200);
     }
-
-    // User Logout
     public function logout(Request $request)
     {
         try {
@@ -333,8 +320,6 @@ class AuthController extends Controller
             ], 500);
         }
     }
-
-    // forgot password
     public function forgotPassword(Request $request)
     {
         // Validation Rules
@@ -398,8 +383,6 @@ class AuthController extends Controller
             'message' => 'OTP send to your email'
         ], 200);
     }
-
-    // after forgot password then change password
     public function changePassword(Request $request)
     {
 
@@ -442,8 +425,6 @@ class AuthController extends Controller
             ]);
         }
     }
-
-    // user profile by id
     public function profile(Request $request)
     {
         $user = User::find($request->user_id ?? Auth::id());
@@ -470,8 +451,6 @@ class AuthController extends Controller
             'data' => $user
         ], 200);
     }
-
-    // user update your account password
     public function updatePassword(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -510,8 +489,6 @@ class AuthController extends Controller
             ]);
         }
     }
-
-    // upload avatar
     public function avatar(Request $request)
     {
         $user = User::findOrFail(Auth::id());
@@ -548,8 +525,6 @@ class AuthController extends Controller
             'message' => 'No image uploaded!',
         ], 400);
     }
-
-    // update profile avatar
     public function updateAvatar(Request $request)
     {
         $user = User::findOrFail(Auth::id());
@@ -589,7 +564,6 @@ class AuthController extends Controller
             'message' => 'No image uploaded!',
         ], 400);
     }
-
     public function checkToken(Request $request)
     {
         try {
@@ -616,7 +590,6 @@ class AuthController extends Controller
             return response()->json(['status' => false, 'message' => 'Token not provided'], 400);
         }
     }
-
     public function storeContact(Request $request)
     {
         // Validate contact_lists as array
@@ -716,7 +689,6 @@ class AuthController extends Controller
             'data' => $matchedUsers
         ]);
     }
-
     public function synContacts(Request $request)
     {
         // $contactNumbers = ["01797004550", "+8801797004550"];
@@ -724,8 +696,6 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'contact_lists' => 'required'
         ]);
-
-
 
         if ($validator->fails()) {
             return response()->json([
@@ -750,7 +720,6 @@ class AuthController extends Controller
             'data' => $matchedUsers
         ]);
     }
-
     public function deleteAccount(Request $request)
     {
         Auth::user()->delete();
@@ -761,7 +730,6 @@ class AuthController extends Controller
             'message' => 'Account deleted successfully'
         ]);
     }
-
     public function deviceToken(Request $request)
     {
         $request->validate([

@@ -17,7 +17,6 @@ class PushNotificationService
 
         $this->messaging = new FirebaseCloudMessaging($client);
     }
-
     public function sendNotification($deviceToken, $title, $body, $data = [])
     {
         $projectId = env('FIREBASE_PROJECT_ID');

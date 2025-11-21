@@ -23,7 +23,6 @@ class PostController extends Controller
 {
     public function createPost(Request $request)
     {
-        // validation roles
         $validator = Validator::make($request->all(), [
             'meal_name' => 'required|string',
             'have_it' => 'required|string|in:1,2',
@@ -67,10 +66,7 @@ class PostController extends Controller
             ], 422);
         }
 
-
         $user = User::find(Auth::id());
-
-        // User Not Found
         if (!$user) {
             return response()->json([
                 'status' => false,
@@ -78,8 +74,6 @@ class PostController extends Controller
             ], 404);
         }
 
-
-        // store image max 3
         $paths = [];
         foreach ($request->file('images') as $image) {
             if ($user->photo && file_exists(public_path($user->photo))) {
@@ -105,7 +99,6 @@ class PostController extends Controller
             'photo' => json_encode($paths) ?? null
         ]);
 
-        // Notify me
         Auth::user()->notify(new MeNewPostCreated($post));
 
         // follwers_id lists
@@ -129,7 +122,6 @@ class PostController extends Controller
             'data' => $post
         ]);
     }
-
     public function searchFollower(Request $request)
     {
         $followers_id = Follower::where('user_id', Auth::id())->pluck('follower_id');
@@ -151,7 +143,6 @@ class PostController extends Controller
             'data' => $followers,
         ]);
     }
-
     public function following(Request $request)
     {
         $authId = Auth::id();
@@ -203,7 +194,6 @@ class PostController extends Controller
             'data' => $followings
         ]);
     }
-
     public function discovery(Request $request)
     {
         $authId = Auth::id();
@@ -262,7 +252,6 @@ class PostController extends Controller
             'data' => $latestPosts,
         ]);
     }
-
     public function discoveryToggleFollow(Request $request)
     {
         $userId = $request->user_id;
@@ -310,7 +299,6 @@ class PostController extends Controller
             ]);
         }
     }
-
     public function userSearch(Request $request)
     {
         $users = User::where('name', 'like', '%' . $request->user_name . '%')
@@ -323,7 +311,6 @@ class PostController extends Controller
             'data' => $users
         ]);
     }
-
     public function restaurantSearch(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -413,5 +400,4 @@ class PostController extends Controller
             'data' => $request->radius ? $restaurants : $restaurants->first()
         ]);
     }
-
 }
