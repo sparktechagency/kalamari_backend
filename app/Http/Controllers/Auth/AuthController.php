@@ -778,9 +778,4 @@ class AuthController extends Controller
             'device_token' => $user->device_token
         ]);
     }
-
-    public function test(){
-        return 'test';
-    }
-
 }
