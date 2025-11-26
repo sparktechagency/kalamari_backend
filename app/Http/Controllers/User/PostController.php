@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\Validator;
 
 class PostController extends Controller
 {
-    public function createPost(Request $request)
+    public function createPost(Request $request, PushNotificationService $pushNotificationService)
     {
         $validator = Validator::make($request->all(), [
             'meal_name' => 'required|string',
@@ -99,23 +99,42 @@ class PostController extends Controller
             'photo' => json_encode($paths) ?? null
         ]);
 
-        Auth::user()->notify(new MeNewPostCreated($post));
 
-        // follwers_id lists
+        Auth::user()->notify(new MeNewPostCreated($post));
+        // $device_token = Auth::user()->device_token;
+        // $pushNotificationService->sendNotification(
+        //     $device_token,
+        //     'New post added',
+        //     'You' . ' post added successfully.',
+        //     [
+        //         'user_id' => $post->user_id,
+        //         'post_id' => $post->id,
+        //         'redirect' => 'post_id'
+        //     ]
+        // );
+
+
         $followers_id = Follower::where('user_id', Auth::id())->pluck('follower_id');
         // $followers_id = Follower::where('user_id', Auth::id())->pluck('follower_id')->filter()->values();
-
         $users = User::whereIn('id', $followers_id)->get();
-
-        // Notify all without me
         foreach ($users as $user) {
             $user->notify(new NewPostCreated($post));
+            // $device_token = $user->device_token;
+            // $pushNotificationService->sendNotification(
+            //     $device_token,
+            //     'New post',
+            //     Auth::user()->user_name . ' added a post.',
+            //     [
+            //         'user_id' => $post->user_id,
+            //         'post_id' => $post->id,
+            //         'redirect' => 'post_id'
+            //     ]
+            // );
         }
 
-        $notifyUser = User::where('role', 'ADMIN')->first();
-        // Notify post user
-        $notifyUser->notify(new NewPostCreationNotification($post));
-
+        $notifyAdmin = User::where('role', 'ADMIN')->first();
+        $notifyAdmin->notify(new NewPostCreationNotification($post));
+         
         return response()->json([
             'status' => true,
             'message' => 'Post created successful',
