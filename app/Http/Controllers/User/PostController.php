@@ -101,17 +101,17 @@ class PostController extends Controller
 
 
         Auth::user()->notify(new MeNewPostCreated($post));
-        // $device_token = Auth::user()->device_token;
-        // $pushNotificationService->sendNotification(
-        //     $device_token,
-        //     'New post added',
-        //     'You' . ' post added successfully.',
-        //     [
-        //         'user_id' => $post->user_id,
-        //         'post_id' => $post->id,
-        //         'redirect' => 'post_id'
-        //     ]
-        // );
+        $device_token = Auth::user()->device_token;
+        $pushNotificationService->sendNotification(
+            $device_token,
+            'New post added',
+            'You' . ' post added successfully.',
+            [
+                'user_id' => $post->user_id,
+                'post_id' => $post->id,
+                'redirect' => 'post_id'
+            ]
+        );
 
 
         $followers_id = Follower::where('user_id', Auth::id())->pluck('follower_id');
