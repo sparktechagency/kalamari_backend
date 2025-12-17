@@ -122,7 +122,9 @@ class AuthController extends Controller
             ], 422);
         }
 
-        $user = User::where('otp', $request->otp)->first();
+
+        $user = User::where('otp', $request->otp)
+            ->first();
 
         if (!$user) {
             return response()->json([
@@ -322,12 +324,10 @@ class AuthController extends Controller
     }
     public function forgotPassword(Request $request)
     {
-        // Validation Rules
         $validator = Validator::make($request->all(), [
             'email' => 'required|email|max:255',
         ]);
 
-        // Return Validation Errors
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
@@ -335,10 +335,8 @@ class AuthController extends Controller
             ], 422);
         }
 
-        // Check if User Exists
         $user = User::where('email', $request->email)->first();
 
-        // User Not Found
         if (!$user) {
             return response()->json([
                 'status' => false,
@@ -346,25 +344,13 @@ class AuthController extends Controller
             ], 404);
         }
 
-        // create otp
         $otp = rand(100000, 999999);
         $otp_expires_at = Carbon::now()->addMinutes(10);
 
-        if ($user->verified_status == 'verified') {
-
-            // update otp and otp veridied and otp expired at
-            $user->otp_verified_at = null;
-            $user->otp = $otp;
-            $user->otp_expires_at = $otp_expires_at;
-            $user->verified_status = 'unverified';
-            $user->save();
-        }
-        // } else {
-        //     return response()->json([
-        //         'status' => false,
-        //         'message' => 'User not verified',
-        //     ], 404);
-        // }
+        $user->otp_verified_at = null;
+        $user->otp = $otp;
+        $user->otp_expires_at = $otp_expires_at;
+        $user->save();
 
         $data = [
             'userName' => explode('@', $request->email)[0],
@@ -373,7 +359,7 @@ class AuthController extends Controller
         ];
 
         try {
-            Mail::to($request->email)->send(new VerifyOTPMail($data));
+            Mail::to($request->email)->queue(new VerifyOTPMail($data));
         } catch (Exception $e) {
             Log::error($e->getMessage());
         }
@@ -385,13 +371,10 @@ class AuthController extends Controller
     }
     public function changePassword(Request $request)
     {
-
-        // Validation Rules
         $validator = Validator::make($request->all(), [
             'password' => 'required|string|min:6|confirmed'
         ]);
 
-        // Return Validation Errors
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
@@ -399,10 +382,8 @@ class AuthController extends Controller
             ], 422);
         }
 
-        // Check if User Exists
         $user = User::where('email', Auth::user()->email)->first();
 
-        // User Not Found
         if (!$user) {
             return response()->json([
                 'status' => false,
