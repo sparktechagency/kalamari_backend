@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name', 255)->nullable();
+            $table->string('last_name')->nullable();
             $table->string('user_name', 255);
             $table->string('email', 255)->unique();
             $table->string('password', 255);
@@ -29,7 +30,10 @@ return new class extends Migration
             $table->enum('verified_status', ['verified', 'unverified'])->default('unverified');
             $table->enum('profile_status', ['admin', 'unbanned', 'banned'])->default('unbanned');
             $table->string('contact_number')->nullable();
+            $table->string('country_code', 10)->nullable();
+            $table->string('contact_number_with_code', 20)->nullable();
             $table->string('location')->nullable();
+            $table->text('device_token')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
