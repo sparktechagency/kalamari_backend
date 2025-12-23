@@ -10,33 +10,11 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 
 class UserManageController extends Controller
 {
-    // public function getUsers(Request $request)
-    // {
-    //     $users = User::where('role', 'USER')
-    //         ->where('verified_status', 'verified')
-    //         ->paginate($request->per_page ?? 10);
-
-    //     $users->getCollection()->transform(function ($user) {
-    //         return [
-    //             'image' => $user->avatar ?? null,
-    //             'name'  => $user->name,
-    //             'email' => $user->email,
-    //         ];
-    //     });
-
-    //     return response()->json([
-    //         'status' => true,
-    //         'message' => 'All users',
-    //         'data' => $users
-    //     ]);
-    // }
-
     public function getUsers(Request $request)
     {
         $query = User::where('role', 'USER')
             ->where('verified_status', 'verified');
 
-        // Search functionality
         if ($request->has('search') && $request->search != '') {
             $searchTerm = $request->search;
             $query->where(function ($q) use ($searchTerm) {
@@ -63,7 +41,6 @@ class UserManageController extends Controller
             'data' => $users
         ]);
     }
-
     public function getUser(Request $request)
     {
         $user = User::where('role', 'USER')->where('id', $request->user_id)->first();
@@ -80,7 +57,6 @@ class UserManageController extends Controller
             'data' => $user
         ]);
     }
-
     public function deleteUser(Request $request)
     {
         // Validate that user_id is provided

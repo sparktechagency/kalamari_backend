@@ -9,19 +9,19 @@ class PushNotificationController extends Controller
 {
     public function sendPush(Request $request, PushNotificationService $firebase)
     {
-        // $request->validate([
-        //     'token' => 'required',
-        //     'title' => 'required',
-        //     'body' => 'required',
-        // ]);
+        $request->validate([
+            'token' => 'required',
+            'title' => 'required',
+            'body' => 'required',
+        ]);
 
-        // $firebase->sendNotification(
-        //     $request->token,
-        //     $request->title,
-        //     $request->body,
-        //     $request->data ?? []
-        // );
+        $firebase->sendNotification(
+            $request->token,
+            $request->title,
+            $request->body,
+            $request->data ?? []
+        );
 
-        // return response()->json(['message' => 'Push notification sent successfully']);
+        return response()->json(['message' => 'Push notification sent successfully']);
     }
 }

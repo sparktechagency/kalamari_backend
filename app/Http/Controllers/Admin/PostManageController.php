@@ -14,9 +14,8 @@ class PostManageController extends Controller
     public function getPosts(Request $request)
     {
         $query = Post::where('post_status', 'approved')
-            ->with('user'); // eager load user for avatar, name etc.
+            ->with('user');
 
-        // Search functionality (based on user name)
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
             $query->whereHas('user', function ($q) use ($search) {
@@ -44,7 +43,6 @@ class PostManageController extends Controller
             'data' => $posts
         ]);
     }
-
     public function getPost(Request $request){
         $post = Post::where('id', $request->post_id)->first();
 
@@ -66,15 +64,11 @@ class PostManageController extends Controller
             'data'=> $post
         ]);
     }
-    
-
     public function deletePost(Request $request)
     {
-        // Validate that user_id is provided
         $validator = Validator::make($request->all(), [
             'post_id' => 'required|integer|gt:0|exists:posts,id',
         ]);
-
 
         if ($validator->fails()) {
             return response()->json([

@@ -54,7 +54,6 @@ class CommentController extends Controller
             'comment' => $request->comment
         ]);
 
-
         // post user
         $post_user_id = Post::where('id', $request->post_id)->first()->user_id;
 
@@ -63,15 +62,12 @@ class CommentController extends Controller
         // Notify post user
         $notifyUser->notify(new NewCommentNotification($comment));
 
-
-
         return response()->json([
             'status' => true,
             'message' => 'Comment created successful',
             'data' => $comment
         ]);
     }
-
     public function deleteComment(Request $request)
     {
         $authUser = Auth::user();
@@ -113,14 +109,9 @@ class CommentController extends Controller
             'message' => 'Comment deleted successfully',
         ]);
     }
-
     public function getComments(Request $request)
     {
         $comments = Comment::where('post_id', $request->post_id)->latest()->get();
-
-        // foreach ($comments as $comment) {
-        //     $comment->post_user_id = Post::where('id',$comment->post_id)->first()->user_id;
-        // }
 
         return response()->json([
             'status' => true,
@@ -128,7 +119,6 @@ class CommentController extends Controller
             'data' => $comments
         ]);
     }
-
     public function replay(Request $request)
     {
         // validation roles
@@ -173,36 +163,6 @@ class CommentController extends Controller
             'data' => $replay
         ]);
     }
-
-    // public function like(Request $request)
-    // {
-    //     $commentId = $request->comment_id;
-
-    //     $comment = Comment::where('id', $commentId)->first();
-    //     if (!$comment) {
-    //         return response()->json([
-    //             'status' => false,
-    //             'message' => 'Comment not found'
-    //         ]);
-    //     }
-
-    //     $exists = Comment::where('id', $commentId)->first();
-
-    //     if ($exists) {
-    //         $exists->decrement('like');
-    //         return response()->json([
-    //             'status' => true,
-    //             'message' => 'Like removed'
-    //         ]);
-    //     } else {
-    //         $exists->increment('like');
-    //         return response()->json([
-    //             'status' => true,
-    //             'message' => 'Like saved'
-    //         ]);
-    //     }
-    // }
-
     public function like(Request $request)
     {
         $commentId = $request->comment_id;
@@ -239,139 +199,6 @@ class CommentController extends Controller
             ]);
         }
     }
-
-    // public function getCommentWithReplayLike(Request $request)
-    // {
-
-    //     $post = Post::with(['comments.user', 'comments.replies'])->where('id',$request->post_id)->get();
-
-    //     $post->tagged = json_decode($post->tagged);
-    //         $post->photo = json_decode($post->photo);
-
-    //     $post->transform(function ($post) {
-    //         $post->comments->transform(function ($comment) {
-    //             return [
-    //                 'id' => $comment->id,
-    //                 'post_id' => $comment->post_id,
-    //                 'user_id' => $comment->user_id,
-    //                 'user_name' => $comment->user->name ?? null,
-    //                 'avatar' => $comment->user->avatar ?? null,
-    //                 'comment' => $comment->comment,
-    //                 'like' => $comment->like,
-    //                 'created_at' => $comment->created_at,
-    //                 'updated_at' => $comment->updated_at,
-    //                 'replies' => $comment->replies,
-    //             ];
-    //         });
-
-    //         return $post;
-    //     });
-
-    //     return response()->json([
-    //         'status' => true,
-    //         'message' => 'get comment by post with replay and like',
-    //         'data' => $post
-    //     ]);
-    // }
-
-
-    // public function getCommentWithReplayLike(Request $request)
-    // {
-    //     $posts = Post::with(['comments.user', 'comments.replies'])
-    //         ->where('id', $request->post_id)
-    //         ->get();
-
-    //     $posts->transform(function ($post) {
-    //         // JSON decode
-    //         $post->tagged = json_decode($post->tagged);
-    //         $post->photo = json_decode($post->photo);
-
-    //         // Total comment count (without replies)
-    //         $post->comment_count = $post->comments->count();
-
-    //         // Transform comments
-    //         $post->comments->transform(function ($comment) {
-    //             return [
-    //                 'id' => $comment->id,
-    //                 'post_id' => $comment->post_id,
-    //                 'user_id' => $comment->user_id,
-    //                 'user_name' => $comment->user->name ?? null,
-    //                 'avatar' => $comment->user->avatar ?? null,
-    //                 'comment' => $comment->comment,
-    //                 'like' => $comment->like,
-    //                 'created_at' => $comment->created_at,
-    //                 'updated_at' => $comment->updated_at,
-    //                 'replies' => $comment->replies, // If needed, you can transform replies too
-    //             ];
-    //         });
-
-    //         return $post;
-    //     });
-
-    //     return response()->json([
-    //         'status' => true,
-    //         'message' => 'get comment by post with replay and like',
-    //         'data' => $posts
-    //     ]);
-    // }
-
-
-    // public function getCommentWithReplayLike(Request $request)
-    // {
-    //     $posts = Post::with(['comments.user', 'comments.replies.user'])
-    //         ->where('id', $request->post_id)
-    //         ->get();
-
-    //     $isHeart = true;
-
-    //     $posts->transform(function ($post) {
-    //         // JSON decode
-    //         $post->tagged = json_decode($post->tagged);
-    //         $post->photo = json_decode($post->photo);
-
-    //         // Total comment count (excluding replies)
-    //         $post->comment_count = $post->comments->count();
-    //         $post->isHeart = $isHeart;
-
-    //         // Transform comments
-    //         $post->comments->transform(function ($comment) {
-    //             // Transform replies with user info
-    //             $replies = $comment->replies->map(function ($reply) {
-    //                 return [
-    //                     'id' => $reply->id,
-    //                     'user_id' => $reply->user_id,
-    //                     'user_name' => $reply->user->name ?? null,
-    //                     'avatar' => $reply->user->avatar ?? null,
-    //                     'replay' => $reply->replay,
-    //                     'created_at' => $reply->created_at,
-    //                 ];
-    //             });
-
-    //             return [
-    //                 'id' => $comment->id,
-    //                 'post_id' => $comment->post_id,
-    //                 'user_id' => $comment->user_id,
-    //                 'user_name' => $comment->user->name ?? null,
-    //                 'avatar' => $comment->user->avatar ?? null,
-    //                 'comment' => $comment->comment,
-    //                 'like' => $comment->like,
-    //                 'reply_count' => $comment->replies->count(), // ✅ Added reply count
-    //                 'replies' => $replies,
-    //                 'created_at' => $comment->created_at,
-    //                 'updated_at' => $comment->updated_at,
-    //             ];
-    //         });
-
-    //         return $post;
-    //     });
-
-    //     return response()->json([
-    //         'status' => true,
-    //         'message' => 'get comment by post with replay and like',
-    //         'data' => $posts
-    //     ]);
-    // }
-
     public function getCommentWithReplayLike(Request $request)
     {
         $authId = Auth::id();
@@ -391,103 +218,6 @@ class CommentController extends Controller
         ])
             ->where('id', $request->post_id)
             ->get();
-
-        // $posts->transform(function ($post) use ($authId) {
-
-        //     $post->tagged = json_decode($post->tagged);
-        //     $post->photo = json_decode($post->photo);
-
-        //     // Total comment count
-        //     $post->comment_count = $post->comments->count();
-
-        //     // ✅ Actual isHeart check for this post (optional: if you track heart at post level)
-        //     $post->isHeart = Heart::where('post_id', $post->id)
-        //         ->where('user_id', $authId)
-        //         ->exists();
-
-        //     // Comments
-        //     $post->comments->transform(function ($comment) use ($authId) {
-        //         // Replies
-        //         $replies = $comment->replies->map(function ($reply) use ($authId) {
-        //             return [
-        //                 'id' => $reply->id,
-        //                 'user_id' => $reply->user_id,
-        //                 'user_name' => $reply->user->name ?? null,
-        //                 'avatar' => $reply->user->avatar ?? null,
-        //                 'replay' => $reply->replay,
-        //                 'created_at' => $reply->created_at,
-        //             ];
-        //         });
-
-        //         return [
-        //             'id' => $comment->id,
-        //             'post_id' => $comment->post_id,
-        //             'user_id' => $comment->user_id,
-        //             'user_name' => $comment->user->name ?? null,
-        //             'avatar' => $comment->user->avatar ?? null,
-        //             'comment' => $comment->comment,
-        //             'like' => $comment->like,
-        //             'reply_count' => $comment->replies->count(),
-        //             'replies' => $replies,
-        //             'created_at' => $comment->created_at,
-        //             'updated_at' => $comment->updated_at,
-        //         ];
-        //     });
-
-        //     return $post;
-        // });
-
-
-        // $posts->transform(function ($post) use ($authId,$showDeleteButton) {
-        //     $post->tagged = json_decode($post->tagged);
-        //     $post->photo = json_decode($post->photo);
-
-
-
-        //     // Total comment count
-        //     $post->comment_count = kmCount($post->comments->count());
-
-        //     // ❤️ love_reacts কেঃ 1.5K / 2M এ রূপান্তর করো
-        //     $post->love_reacts = kmCount($post->love_reacts ?? 0);
-
-        //     // IsHeart
-        //     $post->isHeart = Heart::where('post_id', $post->id)
-        //         ->where('user_id', $authId)
-        //         ->exists();
-
-        //     // Comments 
-        //     $post->comments->transform(function ($comment) use ($authId,$showDeleteButton) {
-        //         $replies = $comment->replies->map(function ($reply) use ($authId) {
-        //             return [
-        //                 'id' => $reply->id,
-        //                 'user_id' => $reply->user_id,
-        //                 'user_name' => $reply->user->name ?? null,
-        //                 'avatar' => $reply->user->avatar ?? null,
-        //                 'replay' => $reply->replay,
-        //                 'created_at' => $reply->created_at,
-        //             ];
-        //         });
-
-        //         return [
-        //             'id' => $comment->id,
-        //             'post_id' => $comment->post_id,
-        //             'user_id' => $comment->user_id,
-        //             'user_name' => $comment->user->name ?? null,
-        //             'avatar' => $comment->user->avatar ?? null,
-        //             'comment' => $comment->comment,
-        //             'like' => kmCount($comment->like),
-        //             'reply_count' => kmCount($comment->replies->count()),
-        //             'replies' => $replies,
-        //             'showDeleteButton' => $showDeleteButton,
-        //             'created_at' => $comment->created_at,
-        //             'updated_at' => $comment->updated_at,
-        //         ];
-        //     });
-
-        //     return $post;
-        // });
-
-
 
         $posts->transform(function ($post) use ($authId) {
             $post->tagged = json_decode($post->tagged);
@@ -545,7 +275,4 @@ class CommentController extends Controller
             'data' => $posts
         ]);
     }
-
-
-
 }

@@ -14,7 +14,6 @@ class HeartController extends Controller
 {
     public function toggleHeart(Request $request)
     {
-
         $postId = $request->post_id;
 
         $targetId = Auth::id();

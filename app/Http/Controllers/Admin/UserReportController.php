@@ -27,8 +27,6 @@ class UserReportController extends Controller
             'data' => $user_reports
         ]);
     }
-
-
     public function getReport(Request $request)
     {
         $report = UserReport::find($request->report_id);
