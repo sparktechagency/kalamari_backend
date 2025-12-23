@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class MyProfileController extends Controller
@@ -13,16 +14,14 @@ class MyProfileController extends Controller
     // admin profile update
     public function updateAdminProfile(Request $request)
     {
-        // validation roles
         $validator = Validator::make($request->all(), [
-            'avatar' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:20480', // 20MB max
+            'avatar' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:20480', // 20 MB max
             'name' => 'nullable|string',
             'last_name' => 'nullable',
             'contact_number' => 'nullable|string',
             'location' => 'nullable|string',
         ]);
 
-        // check validation
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
@@ -30,10 +29,8 @@ class MyProfileController extends Controller
             ], 422);
         }
 
-        // $user = User::find(Auth::id());
         $user = Auth::user();
 
-        // User Not Found
         if (!$user) {
             return response()->json([
                 'status' => false,
@@ -42,22 +39,25 @@ class MyProfileController extends Controller
         }
 
         if ($request->hasFile('avatar')) {
-            if ($user->avatar && file_exists(public_path($user->avatar))) {
-                if (!$user->avatar == '/default/avatar.jpg') {
-                    unlink(public_path($user->avatar));
-                }
+
+            if ($user->avatar && Storage::disk('public')->exists(str_replace('/storage/', '', $user->avatar))) {
+                Storage::disk('public')->delete(str_replace('/storage/', '', $user->avatar));
             }
 
             $file = $request->file('avatar');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $filepath = $file->storeAs('avatars', $filename, 'public');
+            $filepath = imageUpload(
+                $file,
+                'avatar',
+                'uploads/avatars',
+                null,
+                null,
+                50,
+                false
+            );
 
-            // avatar update
             $user->avatar = '/storage/' . $filepath;
         }
 
-
-        // update user name and bio
         $user->name = $request->name ?? $user->name;
         $user->last_name = $request->last_name ?? $user->last_name;
         $user->contact_number = $request->contact_number ?? $user->contact_number;
@@ -70,7 +70,6 @@ class MyProfileController extends Controller
             'data' => $user,
         ]);
     }
-
     public function getAdminProfile()
     {
         $admin = User::where('id', Auth::id())->where('role', 'ADMIN')->first();

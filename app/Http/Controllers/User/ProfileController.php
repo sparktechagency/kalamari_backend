@@ -13,6 +13,7 @@ use App\Notifications\NewReportCreationNotification;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 
@@ -21,16 +22,14 @@ class ProfileController extends Controller
     // user profile update by id
     public function updateUserProfile(Request $request)
     {
-        // validation roles
         $validator = Validator::make($request->all(), [
-            'avatar' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:20480', // 20MB max
+            'avatar' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:20480', // 20 MB max
             'name' => 'nullable|string|max:255',
             'bio' => 'nullable|string',
             'contact_number' => 'nullable',
             'country_code' => 'nullable',
         ]);
 
-        // check validation
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
@@ -39,8 +38,6 @@ class ProfileController extends Controller
         }
 
         $user = User::find(Auth::id());
-
-        // User Not Found
         if (!$user) {
             return response()->json([
                 'status' => false,
@@ -48,25 +45,26 @@ class ProfileController extends Controller
             ], 404);
         }
 
-
         if ($request->hasFile('avatar')) {
-            if ($user->avatar && file_exists(public_path($user->avatar))) {
-                if (!$user->avatar == '/default/avatar.jpg') {
-                    unlink(public_path($user->avatar));
-                }
+
+            if ($user->avatar && Storage::disk('public')->exists(str_replace('/storage/', '', $user->avatar))) {
+                Storage::disk('public')->delete(str_replace('/storage/', '', $user->avatar));
             }
 
             $file = $request->file('avatar');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $filepath = $file->storeAs('avatars', $filename, 'public');
+            $filepath = imageUpload(
+                $file,
+                'avatar',
+                'uploads/avatars',
+                null,
+                null,
+                50,
+                false
+            );
 
-            // avatar update
             $user->avatar = '/storage/' . $filepath;
         }
 
-
-
-        // update user name and bio
         $user->name = ucfirst($request->name) ?? ucfirst($user->name);
         // $user->user_name = '@' . explode(' ', trim(ucfirst($request->name)))[0] . '_' . rand(0, 9);
         $user->bio = $request->bio ?? $user->bio;
