@@ -56,9 +56,9 @@ class ProfileController extends Controller
                 $file,
                 'avatar',
                 'uploads/avatars',
-                null,
-                null,
-                50,
+                512,
+                512,
+                80,
                 false
             );
 

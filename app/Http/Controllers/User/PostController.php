@@ -17,6 +17,7 @@ use App\Services\PushNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class PostController extends Controller
@@ -76,10 +77,18 @@ class PostController extends Controller
 
         $paths = [];
         foreach ($request->file('images') as $image) {
-            if ($user->photo && file_exists(public_path($user->photo))) {
-                unlink(public_path($user->photo));
-            }
-            $paths[] = '/storage/' . $image->store('posts', 'public');
+            $file = $image;
+            $filepath = imageUpload(
+                $file,
+                'image',
+                'uploads/posts',
+                1080,
+                1080,
+                80,
+                true
+            );
+
+            $paths[] = '/storage/' . $filepath;
         }
 
         $post = Post::create([
@@ -291,7 +300,6 @@ class PostController extends Controller
             ]);
         }
 
-
         $exists = Follower::where('user_id', $userId)
             ->where('follower_id', $targetId)
             ->first();
@@ -419,7 +427,6 @@ class PostController extends Controller
             'data' => $request->radius ? $restaurants : $restaurants->first()
         ]);
     }
-
     public function restaurantSearch(Request $request)
     {
         $validator = Validator::make($request->all(), [
