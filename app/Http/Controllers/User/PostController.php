@@ -201,8 +201,8 @@ class PostController extends Controller
                 ->where('user_id', Auth::id())
                 ->exists();
 
-            // Get avatar from user relation
-            $post->avatar = $post->user->avatar ?? null;
+
+            $post->user = User::where('id', $post->user_id)->select('id', 'name', 'user_name')->first();
 
             unset($post->user); // optional: if you don't want to expose full user data
 
@@ -249,7 +249,6 @@ class PostController extends Controller
             $post->tagged = json_decode($post->tagged);
             $post->photo = json_decode($post->photo);
 
-            // ✅ Actual isHeart check for this post (optional: if you track heart at post level)
             $post->isHeart = Heart::where('post_id', $post->id)
                 ->where('user_id', $authId)
                 ->exists();
@@ -266,10 +265,9 @@ class PostController extends Controller
                 $post->status = 'Follow';
             }
 
-            // Get avatar from user relation
-            $post->avatar = $post->user->avatar ?? null;
+            $post->user = User::where('id', $post->user_id)->select('id', 'name', 'user_name')->first();
 
-            unset($post->user); // optional: if you don't want to expose full user data
+            unset($post->user);
 
             return $post;
         });
