@@ -113,7 +113,7 @@ class BookmarkController extends Controller
     }
     public function viewPost(Request $request)
     {
-        $post = Post::with('user:id,name,user_name')->find($request->post_id);
+        $post = Post::with('user:id,name,user_name,avatar')->find($request->post_id);
 
         if (!$post) {
             return response()->json([

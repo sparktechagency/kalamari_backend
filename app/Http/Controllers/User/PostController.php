@@ -179,7 +179,7 @@ class PostController extends Controller
         $followings_id = Follower::where('follower_id', $authId)->pluck('user_id');
 
         // approved post paginate get
-        $followings = Post::with('user:id,name,user_name')->where('post_status', 'approved')
+        $followings = Post::with('user:id,name,user_name,avatar')->where('post_status', 'approved')
             ->whereIn('user_id', $followings_id)
             ->latest() // add latest
             // ->inRandomOrder() // 🔀 ORDER BY RAND()/RANDOM() of sql
@@ -229,7 +229,7 @@ class PostController extends Controller
 
         $blockedUserIds = UserBlock::where('blocked_id', Auth::id())->pluck('blocker_id')->toArray();
 
-        $latestPosts = Post::with('user:id,name,user_name')->whereNotIn('user_id', $blockedUserIds)
+        $latestPosts = Post::with('user:id,name,user_name,avatar')->whereNotIn('user_id', $blockedUserIds)
             ->orderByDesc('love_reacts')
             ->orderByDesc('created_at') // fallback, if, love_reacts is equal
             ->paginate($perPage ?? 10);
