@@ -179,7 +179,7 @@ class PostController extends Controller
         $followings_id = Follower::where('follower_id', $authId)->pluck('user_id');
 
         // approved post paginate get
-        $followings = Post::where('post_status', 'approved')
+        $followings = Post::with('user:id,name,user_name')->where('post_status', 'approved')
             ->whereIn('user_id', $followings_id)
             ->latest() // add latest
             // ->inRandomOrder() // 🔀 ORDER BY RAND()/RANDOM() of sql
@@ -202,9 +202,9 @@ class PostController extends Controller
                 ->exists();
 
 
-            $post->user = User::where('id', $post->user_id)->select('id', 'name', 'user_name')->first();
+            // $post->user = User::where('id', $post->user_id)->select('id', 'name', 'user_name')->first();
 
-            unset($post->user); // optional: if you don't want to expose full user data
+            // unset($post->user); // optional: if you don't want to expose full user data
 
             return $post;
         });
@@ -229,7 +229,7 @@ class PostController extends Controller
 
         $blockedUserIds = UserBlock::where('blocked_id', Auth::id())->pluck('blocker_id')->toArray();
 
-        $latestPosts = Post::whereNotIn('user_id', $blockedUserIds)
+        $latestPosts = Post::with('user:id,name,user_name')->whereNotIn('user_id', $blockedUserIds)
             ->orderByDesc('love_reacts')
             ->orderByDesc('created_at') // fallback, if, love_reacts is equal
             ->paginate($perPage ?? 10);
@@ -265,9 +265,9 @@ class PostController extends Controller
                 $post->status = 'Follow';
             }
 
-            $post->user = User::where('id', $post->user_id)->select('id', 'name', 'user_name')->first();
+            // $post->user = User::where('id', $post->user_id)->select('id', 'name', 'user_name')->first();
 
-            unset($post->user);
+            // unset($post->user);
 
             return $post;
         });
