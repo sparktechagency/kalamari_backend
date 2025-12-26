@@ -153,7 +153,7 @@ class PostController extends Controller
     public function searchFollower(Request $request)
     {
         $followers_id = Follower::where('user_id', Auth::id())->pluck('follower_id');
-        $followers = User::select('id', 'name', 'avatar')->whereIn('id', $followers_id);
+        $followers = User::select('id', 'name', 'avatar','verified_status')->whereIn('id', $followers_id);
         if ($request->filled('search')) {
             $followers = $followers->where('name', 'LIKE', "%" . $request->search . "%");
         }
@@ -179,7 +179,7 @@ class PostController extends Controller
         $followings_id = Follower::where('follower_id', $authId)->pluck('user_id');
 
         // approved post paginate get
-        $followings = Post::with('user:id,name,user_name,avatar')->where('post_status', 'approved')
+        $followings = Post::with('user:id,name,user_name,avatar,verified_status')->where('post_status', 'approved')
             ->whereIn('user_id', $followings_id)
             ->latest() // add latest
             // ->inRandomOrder() // 🔀 ORDER BY RAND()/RANDOM() of sql
@@ -229,7 +229,7 @@ class PostController extends Controller
 
         $blockedUserIds = UserBlock::where('blocked_id', Auth::id())->pluck('blocker_id')->toArray();
 
-        $latestPosts = Post::with('user:id,name,user_name,avatar')->whereNotIn('user_id', $blockedUserIds)
+        $latestPosts = Post::with('user:id,name,user_name,avatar,verified_status')->whereNotIn('user_id', $blockedUserIds)
             ->orderByDesc('love_reacts')
             ->orderByDesc('created_at') // fallback, if, love_reacts is equal
             ->paginate($perPage ?? 10);
@@ -291,12 +291,12 @@ class PostController extends Controller
             ]);
         }
 
-        if ($user->verified_status == 'unverified') {
-            return response()->json([
-                'status' => false,
-                'message' => 'User not verified'
-            ]);
-        }
+        // if ($user->verified_status == 'unverified') {
+        //     return response()->json([
+        //         'status' => false,
+        //         'message' => 'User not verified'
+        //     ]);
+        // }
 
         $exists = Follower::where('user_id', $userId)
             ->where('follower_id', $targetId)
@@ -327,7 +327,7 @@ class PostController extends Controller
     public function userSearch(Request $request)
     {
         $users = User::where('name', 'like', '%' . $request->user_name . '%')
-            ->select('id', 'name', 'avatar')
+            ->select('id', 'name', 'avatar','verified_status')
             ->get();
 
         return response()->json([

@@ -81,7 +81,7 @@ class ProfileController extends Controller
     {
         $followings_id = Follower::where('follower_id', $request->user_id ?? Auth::id())->get()->pluck('user_id');
 
-        $followings = User::select('id', 'name', 'avatar')->whereIn('id', $followings_id);
+        $followings = User::select('id', 'name', 'avatar','verified_status')->whereIn('id', $followings_id);
 
         $followings = $followings->paginate($request->per_page ?? 10);
 
@@ -109,7 +109,7 @@ class ProfileController extends Controller
         $followings_id = Follower::where('follower_id', Auth::id())->pluck('user_id');
 
         // followers list
-        $followers = User::select('id', 'name', 'avatar')->whereIn('id', $followers_id);
+        $followers = User::select('id', 'name', 'avatar','verified_status')->whereIn('id', $followers_id);
         $followers = $followers->paginate($request->per_page ?? 10);
 
         // $followers = $followers->map(function ($follower) use ($followings_id) {
@@ -186,13 +186,11 @@ class ProfileController extends Controller
     }
     public function userReport(Request $request)
     {
-        // validation roles
         $validator = Validator::make($request->all(), [
             'reported_id' => 'required|numeric|exists:users,id',
             'content' => 'required|string'
         ]);
-
-        // check validation
+ 
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
@@ -200,17 +198,14 @@ class ProfileController extends Controller
             ], 422);
         }
 
-
         $user_report = UserReport::create([
             'reporter_id' => Auth::id(),
             'reported_id' => $request->reported_id,
-            'content' => $request->content,
+            'content' => $request->content
         ]);
 
         $notifyUser = User::where('role', 'ADMIN')->first();
-        // Notify post user
         $notifyUser->notify(new NewReportCreationNotification($user_report));
-
 
         return response()->json([
             'status' => true,
