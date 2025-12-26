@@ -41,7 +41,7 @@ class UserManageController extends Controller
             'data' => $users
         ]);
     }
-    public function getUser(Request $request)
+    public function viewUser(Request $request)
     {
         $user = User::where('role', 'USER')->where('id', $request->user_id)->first();
         if (!$user) {

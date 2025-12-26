@@ -59,7 +59,7 @@ Route::middleware('auth:api')->group(function () {
 
         // manage users
         Route::get('/get-users', [UserManageController::class, 'getUsers']);
-        Route::get('/get-user', [UserManageController::class, 'getUser']);
+        Route::get('/view-user', [UserManageController::class, 'viewUser']);
         Route::delete('/delete-user', [UserManageController::class, 'deleteUser']);
         Route::patch('/verified-unverified/{id?}', [UserManageController::class, 'verifiedUnverified']);
 
