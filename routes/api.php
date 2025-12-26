@@ -61,6 +61,7 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/get-users', [UserManageController::class, 'getUsers']);
         Route::get('/get-user', [UserManageController::class, 'getUser']);
         Route::delete('/delete-user', [UserManageController::class, 'deleteUser']);
+        Route::patch('/verified-unverified/{id?}', [UserManageController::class, 'verifiedUnverified']);
 
         // profile
         Route::post('/update-admin-profile', [MyProfileController::class, 'updateAdminProfile']);

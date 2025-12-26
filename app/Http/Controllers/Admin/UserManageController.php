@@ -57,6 +57,28 @@ class UserManageController extends Controller
             'data' => $user
         ]);
     }
+
+    public function verifiedUnverified(Request $request,$id)
+    {
+        $user = User::where('role', 'USER')->where('id', $id)->first();
+
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'User not found'
+            ]);
+        }
+
+        $user->verified_status = $user->verified_status == 'unverified' ? 'verified' : 'unverified';
+        $user->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => $user->verified_status == 'unverified' ? 'User verified successfully.' : 'User unverified successfully',
+            'data' => $user
+        ]);
+    }
+
     public function deleteUser(Request $request)
     {
         // Validate that user_id is provided

@@ -142,7 +142,7 @@ class AuthController extends Controller
             $user->otp = null;
             $user->otp_expires_at = null;
             $user->otp_verified_at = Carbon::now();
-            $user->verified_status = 'verified';
+            $user->verified_status = 'unverified';
             $user->save();
 
             // custom token time
@@ -173,12 +173,10 @@ class AuthController extends Controller
     }
     public function resendOtp(Request $request)
     {
-        // validation roles
         $validator = Validator::make($request->all(), [
             'email' => 'required|string|email',
         ]);
 
-        // check validation
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
@@ -186,7 +184,6 @@ class AuthController extends Controller
             ], 422);
         }
 
-        // Check if User Exists
         $user = User::where('email', $request->email)->first();
 
         if (!$user) {
@@ -199,22 +196,11 @@ class AuthController extends Controller
         $otp = rand(100000, 999999);
         $otp_expires_at = Carbon::now()->addMinutes(10);
 
-        // email user check
-        if ($user->verified_status == 'unverified') {
+        $user->otp = $otp;
+        $user->otp_expires_at = $otp_expires_at;
+        $user->otp_verified_at = null;
+        $user->save();
 
-            // update otp and otp expired at
-            $user->otp = $otp;
-            $user->otp_expires_at = $otp_expires_at;
-            $user->otp_verified_at = null;
-            $user->save();
-        } else {
-            return response()->json([
-                'status' => false,
-                'message' => 'User already verified.'
-            ], 200);
-        }
-
-        // Send OTP Email
         $data = [
             'userName' => explode('@', $request->email)[0],
             'otp' => $otp,
@@ -234,14 +220,12 @@ class AuthController extends Controller
     }
     public function login(Request $request)
     {
-        // Validation Rules
         $validator = Validator::make($request->all(), [
             'email' => 'required|string|email|max:255',
             'password' => 'required|string|min:6',
             'remember_me' => 'sometimes|boolean'
         ]);
 
-        // Validation Errors
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
@@ -249,10 +233,8 @@ class AuthController extends Controller
             ], 422);
         }
 
-        // Check if User Exists
         $user = User::where('email', $request->email)->first();
 
-        // User Not Found
         if (!$user) {
             return response()->json([
                 'status' => false,
@@ -260,16 +242,14 @@ class AuthController extends Controller
             ], 404);
         }
 
-        // Check Account Status
-        if ($user->verified_status != 'verified') {
-            return response()->json([
-                'status' => false,
-                'un_verified' => true,
-                'message' => 'Your account is unverified. Please contact support.',
-            ], 403);
-        }
+        // if ($user->verified_status != 'verified') {
+        //     return response()->json([
+        //         'status' => false,
+        //         'un_verified' => true,
+        //         'message' => 'Your account is unverified. Please contact support.',
+        //     ], 403);
+        // }
 
-        // Verify Password
         if (!Hash::check($request->password, $user->password)) {
             return response()->json([
                 'status' => false,
@@ -390,19 +370,14 @@ class AuthController extends Controller
         }
         ;
 
-        if ($user->verified_status == 'verified') {
-            $user->password = Hash::make($request->password);
-            $user->save();
-            return response()->json([
-                'status' => true,
-                'message' => 'Password change successfully!',
-            ]);
-        } else {
-            return response()->json([
-                'status' => false,
-                'message' => 'User not verified'
-            ]);
-        }
+        $user->password = Hash::make($request->password);
+        $user->save();
+        
+        return response()->json([
+            'status' => true,
+            'message' => 'Password change successfully!',
+        ]);
+
     }
     public function profile(Request $request)
     {
