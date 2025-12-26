@@ -12,8 +12,8 @@ class UserManageController extends Controller
 {
     public function getUsers(Request $request)
     {
-        $query = User::where('role', 'USER')
-            ->where('verified_status', 'verified');
+        $query = User::where('role', 'USER');
+            // ->where('verified_status', 'verified');
 
         if ($request->has('search') && $request->search != '') {
             $searchTerm = $request->search;
