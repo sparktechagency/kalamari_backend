@@ -74,7 +74,7 @@ class UserManageController extends Controller
 
         return response()->json([
             'status' => true,
-            'message' => $user->verified_status == 'verified' ? 'User unverified successfully.' : 'User verified successfully',
+            'message' => $user->verified_status == 'verified' ? 'User verified successfully.' : 'User unverified successfully',
             'data' => $user
         ]);
     }
