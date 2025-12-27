@@ -69,12 +69,12 @@ class UserManageController extends Controller
             ]);
         }
 
-        $user->verified_status = $user->verified_status == 'unverified' ? 'verified' : 'unverified';
+        $user->verified_status = $user->verified_status == 'verified' ? 'unverified' : 'verified';
         $user->save();
 
         return response()->json([
             'status' => true,
-            'message' => $user->verified_status == 'unverified' ? 'User verified successfully.' : 'User unverified successfully',
+            'message' => $user->verified_status == 'verified' ? 'User unverified successfully.' : 'User verified successfully',
             'data' => $user
         ]);
     }
