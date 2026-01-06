@@ -153,7 +153,7 @@ class PostController extends Controller
     public function searchFollower(Request $request)
     {
         $followers_id = Follower::where('user_id', Auth::id())->pluck('follower_id');
-        $followers = User::select('id', 'name', 'avatar','verified_status')->whereIn('id', $followers_id);
+        $followers = User::select('id', 'name', 'avatar', 'verified_status')->whereIn('id', $followers_id);
         if ($request->filled('search')) {
             $followers = $followers->where('name', 'LIKE', "%" . $request->search . "%");
         }
@@ -327,7 +327,7 @@ class PostController extends Controller
     public function userSearch(Request $request)
     {
         $users = User::where('name', 'like', '%' . $request->user_name . '%')
-            ->select('id', 'name', 'avatar','verified_status')
+            ->select('id', 'name', 'avatar', 'verified_status')
             ->get();
 
         return response()->json([
@@ -459,7 +459,7 @@ class PostController extends Controller
                 'p2.location',
                 'p2.latitude',
                 'p2.longitude',
-                DB::raw('COUNT(*) as post_count'),
+                // DB::raw('COUNT(*) as post_count'),
                 DB::raw('AVG(p2.rating) as average_rating'),
                 DB::raw("(
                 6371 * acos(
@@ -491,6 +491,7 @@ class PostController extends Controller
 
         foreach ($restaurants as $restaurant) {
             $restaurant->photo = json_decode($restaurant->photo, true);
+            $restaurant->post_count = Post::where('user_id', Auth::id())->where('have_it', 'Restaurant')->count();
         }
 
         return response()->json([
@@ -505,5 +506,4 @@ class PostController extends Controller
             'data' => $restaurants
         ]);
     }
-
 }
