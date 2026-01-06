@@ -588,14 +588,9 @@ class PostController extends Controller
             'data' => $restaurants
         ]);
     }
-
-
-
+    
     public function restaurantDetails(Request $request)
     {
-
-
-
         $validator = Validator::make($request->all(), [
             'restaurant_name' => 'required|string',
         ]);
