@@ -70,7 +70,7 @@ class AuthController extends Controller
         ]);
 
         try {
-            Mail::to($user->email)->send(new VerifyOTPMail($email_otp));
+            Mail::to($user->email)->queue(new VerifyOTPMail($email_otp));
         } catch (Exception $e) {
             Log::error($e->getMessage());
         }
@@ -208,7 +208,7 @@ class AuthController extends Controller
         ];
 
         try {
-            Mail::to($user->email)->send(new VerifyOTPMail($data));
+            Mail::to($user->email)->queue(new VerifyOTPMail($data));
         } catch (Exception $e) {
             Log::error($e->getMessage());
         }
