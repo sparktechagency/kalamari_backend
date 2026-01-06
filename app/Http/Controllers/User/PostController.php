@@ -492,6 +492,7 @@ class PostController extends Controller
         foreach ($restaurants as $restaurant) {
             $restaurant->photo = json_decode($restaurant->photo, true);
             $restaurant->post_count = Post::where('user_id', Auth::id())->where('have_it', 'Restaurant')->count();
+            $restaurant->posted_by = Post::where('id',$restaurant->id)->first()->user_id;
         }
 
         return response()->json([
