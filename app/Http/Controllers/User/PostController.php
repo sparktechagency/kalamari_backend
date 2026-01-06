@@ -91,6 +91,8 @@ class PostController extends Controller
             $paths[] = '/storage/' . $filepath;
         }
 
+       $tagged = json_decode($request->tagged[0], true);
+
         $post = Post::create([
             'user_id' => Auth::id(),
             'user_name' => Auth::user()->name,
@@ -103,7 +105,7 @@ class PostController extends Controller
             'longitude' => $request->lng ?? null,
             'description' => $request->description,
             'rating' => $request->rating ?? null,
-            'tagged' => json_encode($request->tagged),
+            'tagged' => json_encode($tagged),
             'tagged_count' => $request->tagged ? count($request->tagged) - 1 : 0,
             'photo' => json_encode($paths) ?? null
         ]);
@@ -425,7 +427,7 @@ class PostController extends Controller
             'data' => $request->radius ? $restaurants : $restaurants->first()
         ]);
     }
-    public function restaurantSearch(Request $request)
+    public function restaurantSearch1(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'latitude' => 'required|numeric',
@@ -459,7 +461,7 @@ class PostController extends Controller
                 'p2.location',
                 'p2.latitude',
                 'p2.longitude',
-                // DB::raw('COUNT(*) as post_count'),
+                DB::raw('COUNT(*) as post_count'),
                 DB::raw('AVG(p2.rating) as average_rating'),
                 DB::raw("(
                 6371 * acos(
@@ -490,12 +492,7 @@ class PostController extends Controller
             ->get();
 
         foreach ($restaurants as $restaurant) {
-
-            $user_id = Post::where('id', $restaurant->id)->first()->user_id;
-
             $restaurant->photo = json_decode($restaurant->photo, true);
-            $restaurant->post_count = Post::where('user_id', $user_id)->where('have_it', 'Restaurant')->count();
-            $restaurant->posted_by = $user_id;
         }
 
         return response()->json([
@@ -508,6 +505,125 @@ class PostController extends Controller
                 'longitude' => $lng,
             ],
             'data' => $restaurants
+        ]);
+    }
+
+    public function restaurantSearch(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+            'radius'   => 'nullable|numeric',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors()
+            ], 422);
+        }
+
+        $lat = $request->latitude;
+        $lng = $request->longitude;
+        $radiusInKm = $request->radius;
+
+        // 🔹 প্রতি restaurant এর highest rated post নেবো
+        $latestPostSub = DB::table('posts')
+            ->selectRaw('
+            MAX(id) as id,
+            restaurant_name
+        ')
+            ->whereNotNull('restaurant_name')
+            ->where('have_it', 'Restaurant')
+            ->where('post_status', 'approved')
+            ->groupBy('restaurant_name');
+
+        $restaurants = DB::table('posts as p')
+            ->joinSub($latestPostSub, 'lp', function ($join) {
+                $join->on('p.id', '=', 'lp.id');
+            })
+            ->select(
+                'p.id',
+                'p.photo',
+                'p.restaurant_name',
+                'p.location',
+                'p.latitude',
+                'p.longitude',
+
+                // 🔹 total posts per restaurant
+                DB::raw('(SELECT COUNT(*) FROM posts WHERE restaurant_name = p.restaurant_name AND post_status="approved") as post_count'),
+
+                DB::raw('(SELECT AVG(rating) FROM posts WHERE restaurant_name = p.restaurant_name AND post_status="approved") as average_rating'),
+
+                // 🔹 distance
+                DB::raw("(
+                6371 * acos(
+                    cos(radians($lat)) * cos(radians(p.latitude)) *
+                    cos(radians(p.longitude) - radians($lng)) +
+                    sin(radians($lat)) * sin(radians(p.latitude))
+                )
+            ) AS distance")
+            )
+            ->when($radiusInKm, function ($q) use ($radiusInKm) {
+                $q->having('distance', '<=', $radiusInKm);
+            })
+            ->orderBy('distance')
+            ->get();
+
+        foreach ($restaurants as $restaurant) {
+            $restaurant->photo = json_decode($restaurant->photo, true);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => $radiusInKm
+                ? "Restaurants within {$radiusInKm} km"
+                : 'Worldwide restaurant map',
+            'center' => [
+                'latitude' => $lat,
+                'longitude' => $lng,
+            ],
+            'data' => $restaurants
+        ]);
+    }
+
+
+
+    public function restaurantDetails(Request $request)
+    {
+
+
+
+        $validator = Validator::make($request->all(), [
+            'restaurant_name' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors()
+            ], 422);
+        }
+
+        $restaurantName = $request->restaurant_name;
+
+        $posts = DB::table('posts')
+            ->where('restaurant_name', $restaurantName)
+            ->where('have_it', 'Restaurant')
+            ->where('post_status', 'approved')
+            ->orderByDesc('id')
+            ->get()
+            ->map(function ($post) {
+                $post->photo = json_decode($post->photo, true);
+                return $post;
+            });
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Restaurant all posts',
+            'restaurant_name' => $restaurantName,
+            'total_posts' => $posts->count(),
+            'data' => $posts
         ]);
     }
 }
