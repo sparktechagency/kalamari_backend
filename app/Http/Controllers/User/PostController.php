@@ -91,7 +91,7 @@ class PostController extends Controller
             $paths[] = '/storage/' . $filepath;
         }
 
-       $tagged = json_decode($request->tagged[0], true);
+        $tagged = json_decode($request->tagged[0], true);
 
         $post = Post::create([
             'user_id' => Auth::id(),
@@ -557,12 +557,12 @@ class PostController extends Controller
 
                 // 🔹 distance
                 DB::raw("(
-                6371 * acos(
-                    cos(radians($lat)) * cos(radians(p.latitude)) *
-                    cos(radians(p.longitude) - radians($lng)) +
-                    sin(radians($lat)) * sin(radians(p.latitude))
-                )
-            ) AS distance")
+                    6371 * acos(
+                        cos(radians($lat)) * cos(radians(p.latitude)) *
+                        cos(radians(p.longitude) - radians($lng)) +
+                        sin(radians($lat)) * sin(radians(p.latitude))
+                    )
+                ) AS distance")
             )
             ->when($radiusInKm, function ($q) use ($radiusInKm) {
                 $q->having('distance', '<=', $radiusInKm);
@@ -572,6 +572,8 @@ class PostController extends Controller
 
         foreach ($restaurants as $restaurant) {
             $restaurant->photo = json_decode($restaurant->photo, true);
+            $restaurant->distance = round($restaurant->distance, 2);
+            $restaurant->unit = 'km';
         }
 
         return response()->json([
