@@ -588,8 +588,8 @@ class PostController extends Controller
             'data' => $restaurants
         ]);
     }
-    
-    public function restaurantDetails(Request $request)
+
+    public function restaurantDetails1(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'restaurant_name' => 'required|string',
@@ -614,6 +614,86 @@ class PostController extends Controller
                 $post->photo = json_decode($post->photo, true);
                 return $post;
             });
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Restaurant all posts',
+            'restaurant_name' => $restaurantName,
+            'total_posts' => $posts->count(),
+            'data' => $posts
+        ]);
+    }
+
+    public function restaurantDetails(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'restaurant_name' => 'required|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors()
+            ], 422);
+        }
+
+        $authId = Auth::id();
+        $restaurantName = $request->restaurant_name;
+
+        $blockedUserIds = UserBlock::where('blocked_id', $authId)
+            ->pluck('blocker_id')
+            ->toArray();
+
+        $followingIds = Follower::where('follower_id', $authId)
+            ->pluck('user_id')
+            ->toArray();
+
+        $posts = Post::with('user:id,name,user_name,avatar,verified_status')
+            ->where('restaurant_name', $restaurantName)
+            ->where('have_it', 'Restaurant')
+            ->where('post_status', 'approved')
+            ->whereNotIn('user_id', $blockedUserIds)
+            ->orderByDesc('id')
+            ->get();
+
+        if ($posts->isEmpty()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No posts found for this restaurant'
+            ]);
+        }
+
+        $posts->transform(function ($post) use ($authId, $followingIds) {
+
+            $post->photo = json_decode($post->photo);
+            $post->tagged = json_decode($post->tagged);
+
+            // ❤️ isHeart
+            $post->isHeart = Heart::where('post_id', $post->id)
+                ->where('user_id', $authId)
+                ->exists();
+
+            // 🔖 isBookmark
+            $post->isBookmark = Bookmark::where('post_id', $post->id)
+                ->where('user_id', $authId)
+                ->exists();
+
+            // 👥 follow status
+            if ($post->user_id == $authId) {
+                $post->status = null;
+            } elseif (in_array($post->user_id, $followingIds)) {
+                $post->status = 'Following';
+            } else {
+                $post->status = 'Follow';
+            }
+
+            // extra avatar full url
+            if ($post->user && $post->user->avatar) {
+                $post->user->avatar_url = url($post->user->avatar);
+            }
+
+            return $post;
+        });
 
         return response()->json([
             'status' => true,
