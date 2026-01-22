@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
 class PostController extends Controller
 {
@@ -293,11 +294,11 @@ class PostController extends Controller
             ]);
         }
 
-         if ($targetId == Auth::id()) {
-                throw ValidationException::withMessages([
-                    'message' => "You can't follow yourself.",
-                ]);
-            }
+        if ($userId == Auth::id()) {
+            throw ValidationException::withMessages([
+                'message' => "You can't follow yourself.",
+            ]);
+        }
 
         // if ($user->verified_status == 'unverified') {
         //     return response()->json([
