@@ -293,6 +293,12 @@ class PostController extends Controller
             ]);
         }
 
+         if ($targetId == Auth::id()) {
+                throw ValidationException::withMessages([
+                    'message' => "You can't follow yourself.",
+                ]);
+            }
+
         // if ($user->verified_status == 'unverified') {
         //     return response()->json([
         //         'status' => false,
