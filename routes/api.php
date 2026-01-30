@@ -14,6 +14,7 @@ use App\Http\Controllers\User\CommentController;
 use App\Http\Controllers\User\HeartController;
 use App\Http\Controllers\User\PostController;
 use App\Http\Controllers\User\ProfileController;
+use App\Http\Controllers\VersionController;
 use Illuminate\Support\Facades\Route;
 
 // public route for user
@@ -29,6 +30,11 @@ Route::get('/check-token', [AuthController::class, 'checkToken']);
 Route::post('/push/send', [PushNotificationController::class, 'sendPush']);
 
 Route::middleware('auth:api')->group(function () {
+
+    // version 
+    Route::post('add-version',[VersionController::class,'addVersion']);
+    Route::get('get-version',[VersionController::class,'getVersion']);
+
     // private route for user
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/change-password', [AuthController::class, 'changePassword']);

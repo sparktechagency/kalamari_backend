@@ -367,17 +367,15 @@ class AuthController extends Controller
                 'status' => false,
                 'message' => 'Unauthenticated',
             ], 404);
-        }
-        ;
+        };
 
         $user->password = Hash::make($request->password);
         $user->save();
-        
+
         return response()->json([
             'status' => true,
             'message' => 'Password change successfully!',
         ]);
-
     }
     public function profile(Request $request)
     {
@@ -535,7 +533,6 @@ class AuthController extends Controller
                 'message' => 'Token is valid',
                 'data' => $user
             ]);
-
         } catch (TokenExpiredException $e) {
             return response()->json(['status' => false, 'message' => 'Token expired'], 401);
         } catch (TokenInvalidException $e) {
@@ -653,4 +650,6 @@ class AuthController extends Controller
             'device_token' => $user->device_token
         ]);
     }
+
+    
 }
