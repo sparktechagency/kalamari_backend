@@ -23,7 +23,7 @@ class ProfileController extends Controller
     public function updateUserProfile(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'avatar' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:102400', // 100 MB max
+            'avatar' => 'sometimes|image|mimes:jpeg,png,jpg,gif,heic|max:102400', // 100 MB max
             'name' => 'nullable|string|max:255',
             'bio' => 'nullable|string',
             'contact_number' => 'nullable',
