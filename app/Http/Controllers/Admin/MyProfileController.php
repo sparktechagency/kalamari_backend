@@ -14,7 +14,7 @@ class MyProfileController extends Controller
     public function updateAdminProfile(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'avatar' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:20480', // 20 MB max
+            'avatar' => 'sometimes|file|mimes:jpeg,png,jpg,webp,gif,svg,heic|max:102400', // 100 MB max
             'name' => 'nullable|string',
             'last_name' => 'nullable',
             'contact_number' => 'nullable|string',
