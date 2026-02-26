@@ -23,7 +23,7 @@ class PostManageController extends Controller
             });
         }
 
-        $posts = $query->paginate($request->per_page ?? 10);
+        $posts = $query->latest()->paginate($request->per_page ?? 10);
 
         $posts->getCollection()->transform(function ($post) {
             return [
