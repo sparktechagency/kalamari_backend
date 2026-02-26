@@ -124,12 +124,14 @@ if (!function_exists('imageUpload')) {
     }
 
 
-
     function imageUpload($file, string $fieldName, string $directory, ?int $width = null, ?int $height = null, int $quality = 90, bool $forceWebp = false): ?string
     {
         if (!$file instanceof \Illuminate\Http\UploadedFile || !$file->isValid()) {
             return null;
         }
+
+        // HEIC প্রসেসিং এর জন্য মেমোরি বাড়িয়ে নেওয়া
+        ini_set('memory_limit', '512M');
 
         $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
         $slugName = Str::slug($originalName);
@@ -137,16 +139,16 @@ if (!function_exists('imageUpload')) {
         $extension = strtolower($file->getClientOriginalExtension());
         $mimeType = $file->getMimeType();
 
-        // HEIC চেক
-        $isHeic = in_array($extension, ['heic', 'heif']) || $mimeType === 'image/heic';
+        // HEIC শনাক্তকরণ
+        $isHeic = in_array($extension, ['heic', 'heif']) || $mimeType === 'image/heic' || $mimeType === 'image/heif';
 
         if (str_starts_with($mimeType, 'image/') || $mimeType === 'application/octet-stream' || $isHeic) {
             try {
-                // ১. ড্রাইভার সেটআপ (Imagick)
+                // ১. ড্রাইভার সেটআপ
                 $manager = new ImageManager(new Driver());
 
-                // ২. ফাইলটি রিড করা
-                $image = $manager->read($file);
+                // ২. ফাইল রিড করা (getRealPath ব্যবহার করা হয়েছে যা HEIC এর জন্য নিরাপদ)
+                $image = $manager->read($file->getRealPath());
 
                 // ৩. রিসাইজিং
                 if ($width || $height) {
@@ -170,16 +172,17 @@ if (!function_exists('imageUpload')) {
 
                 $filePath = "{$directory}/{$fileName}";
 
-                // ৫. ফাইল সেভ করা (V3 তে toString() ব্যবহার করুন)
+                // ৫. স্টোরেজে সেভ করা
                 Storage::disk('public')->put($filePath, $encoded->toString());
 
                 return $filePath;
             } catch (\Exception $e) {
-                Log::error("V3 Image Processing Error: " . $e->getMessage());
+                // এরর আসলে লগে ডিটেইল সেভ হবে
+                Log::error("V3 Image Processing Error for {$originalName}: " . $e->getMessage());
             }
         }
 
-        // প্রসেসিং ফেইল করলে সাধারণ আপলোড
+        // প্রসেসিং ফেইল করলে সাধারণ ফাইল হিসেবে আপলোড
         $fileName = "{$timestamp}_{$slugName}.{$extension}";
         return $file->storeAs($directory, $fileName, 'public');
     }
