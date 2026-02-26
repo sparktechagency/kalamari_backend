@@ -363,34 +363,42 @@ if (!function_exists('imageUpload')) {
 
         try {
             if ($isHeic) {
-                $fileName = "{$timestamp}_{$slugName}.webp";
+                // ১. প্রথমে JPG হিসেবে কনভার্ট করার প্রস্তুতি (বেশি স্ট্যাবল)
+                $tempJpgName = "{$timestamp}_{$slugName}.jpg";
+                $finalWebpName = "{$timestamp}_{$slugName}.webp";
+
                 $tempSource = $file->getRealPath();
+                $storageDir = storage_path("app/public/" . trim($directory, '/'));
 
-                // ১. ডিরেক্টরি তৈরি নিশ্চিত করা
-                $storagePath = storage_path("app/public/{$directory}");
-                if (!file_exists($storagePath)) {
-                    mkdir($storagePath, 0755, true);
+                if (!file_exists($storageDir)) {
+                    mkdir($storageDir, 0755, true);
                 }
-                $targetPath = $storagePath . '/' . $fileName;
 
-                // ২. heif-convert কমান্ড রান করা
-                $command = "heif-convert -q {$quality} " . escapeshellarg($tempSource) . " " . escapeshellarg($targetPath) . " 2>&1";
+                $tempJpgPath = $storageDir . '/' . $tempJpgName;
+                $finalWebpPath = $storageDir . '/' . $finalWebpName;
 
-                // আউটপুট চেক করার জন্য exec ব্যবহার
+                // ২. HEIC -> JPG কমান্ড রান করা
+                $command = "heif-convert -q {$quality} " . escapeshellarg($tempSource) . " " . escapeshellarg($tempJpgPath) . " 2>&1";
                 exec($command, $output, $returnVar);
 
-                if ($returnVar === 0 && file_exists($targetPath)) {
-                    // সাকসেস হলে রিসাইজ করা (যদি লাগে)
+                if ($returnVar === 0 && file_exists($tempJpgPath)) {
+                    // ৩. এখন তৈরি হওয়া JPG ফাইলটিকে Intervention Image দিয়ে WebP তে কনভার্ট এবং রিসাইজ করা
+                    $manager = new ImageManager(new Driver());
+                    $image = $manager->read($tempJpgPath);
+
                     if ($width || $height) {
-                        $manager = new ImageManager(new Driver());
-                        $image = $manager->read($targetPath);
                         $image->scaleDown(width: $width, height: $height);
-                        $image->toWebp($quality)->save($targetPath);
                     }
-                    return "{$directory}/{$fileName}";
+
+                    // WebP হিসেবে সেভ করা
+                    $image->toWebp($quality)->save($finalWebpPath);
+
+                    // টেম্পোরারি JPG ফাইলটি মুছে ফেলা
+                    unlink($tempJpgPath);
+
+                    return trim($directory, '/') . "/{$finalWebpName}";
                 } else {
-                    // কেন ফেইল করল তা লগে দেখা যাবে
-                    Log::error("HEIC Conversion Failed. Command: {$command}. Output: " . implode(', ', $output));
+                    Log::error("HEIC to JPG failed. Command: {$command}. Output: " . implode(', ', $output));
                 }
             } else {
                 // সাধারণ ছবির জন্য (JPG, PNG)
