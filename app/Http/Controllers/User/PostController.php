@@ -89,7 +89,7 @@ class PostController extends Controller
                 true
             );
 
-            $paths[] = '/storage/' . $filepath;
+            return $paths[] = '/storage/' . $filepath;
         }
 
         $tagged = json_decode($request->tagged[0], true);

@@ -3,6 +3,8 @@
 // namespace App\Helpers;
 
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Intervention\Image\Drivers\Gd\Driver;
@@ -67,7 +69,7 @@ if (!function_exists('imageUpload')) {
         return $file->storeAs($directory, $fileName, 'public');
     }
 
-    function imageUpload($file, string $fieldName, string $directory, ?int $width = null, ?int $height = null, int $quality = 90, bool $forceWebp = false): ?string
+    function imageUpload2($file, string $fieldName, string $directory, ?int $width = null, ?int $height = null, int $quality = 90, bool $forceWebp = false): ?string
     {
         if (!$file instanceof \Illuminate\Http\UploadedFile || !$file->isValid()) {
             return null;
@@ -112,12 +114,73 @@ if (!function_exists('imageUpload')) {
                 return $filePath;
             } catch (\Exception $e) {
                 // যদি ইমেজ ডিকোড করতে না পারে, তবে নরমাল ফাইল হিসেবে সেভ হবে
-                \Log::error("Image processing failed: " . $e->getMessage());
+                Log::error("Image processing failed: " . $e->getMessage());
             }
         }
 
         // ইমেজ না হলে বা প্রসেসিং ফেইল করলে সাধারণ আপলোড
         $fileName = "{$timestamp}_{$slugName}." . $file->getClientOriginalExtension();
+        return $file->storeAs($directory, $fileName, 'public');
+    }
+
+
+
+    function imageUpload($file, string $fieldName, string $directory, ?int $width = null, ?int $height = null, int $quality = 90, bool $forceWebp = false): ?string
+    {
+        if (!$file instanceof \Illuminate\Http\UploadedFile || !$file->isValid()) {
+            return null;
+        }
+
+        $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $slugName = Str::slug($originalName);
+        $timestamp = time();
+        $extension = strtolower($file->getClientOriginalExtension());
+        $mimeType = $file->getMimeType();
+
+        // HEIC চেক
+        $isHeic = in_array($extension, ['heic', 'heif']) || $mimeType === 'image/heic';
+
+        if (str_starts_with($mimeType, 'image/') || $mimeType === 'application/octet-stream' || $isHeic) {
+            try {
+                // ১. ড্রাইভার সেটআপ (Imagick)
+                $manager = new ImageManager(new Driver());
+
+                // ২. ফাইলটি রিড করা
+                $image = $manager->read($file);
+
+                // ৩. রিসাইজিং
+                if ($width || $height) {
+                    $image->scaleDown(width: $width, height: $height);
+                }
+
+                // ৪. ফরম্যাট এবং এনকোডিং
+                if ($forceWebp || $isHeic) {
+                    $fileName = "{$timestamp}_{$slugName}.webp";
+                    $encoded = $image->toWebp($quality);
+                } else {
+                    $fileName = "{$timestamp}_{$slugName}.{$extension}";
+                    $encoded = match ($extension) {
+                        'jpg', 'jpeg' => $image->toJpeg($quality),
+                        'gif'         => $image->toGif(),
+                        'png'         => $image->toPng(),
+                        'webp'        => $image->toWebp($quality),
+                        default       => $image->toJpeg($quality),
+                    };
+                }
+
+                $filePath = "{$directory}/{$fileName}";
+
+                // ৫. ফাইল সেভ করা (V3 তে toString() ব্যবহার করুন)
+                Storage::disk('public')->put($filePath, $encoded->toString());
+
+                return $filePath;
+            } catch (\Exception $e) {
+                Log::error("V3 Image Processing Error: " . $e->getMessage());
+            }
+        }
+
+        // প্রসেসিং ফেইল করলে সাধারণ আপলোড
+        $fileName = "{$timestamp}_{$slugName}.{$extension}";
         return $file->storeAs($directory, $fileName, 'public');
     }
 }
