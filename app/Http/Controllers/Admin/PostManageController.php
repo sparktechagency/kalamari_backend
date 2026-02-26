@@ -23,7 +23,7 @@ class PostManageController extends Controller
             });
         }
 
-        $posts = $query->latest()->paginate($request->per_page ?? 10);
+        $posts = $query->paginate($request->per_page ?? 10);
 
         $posts->getCollection()->transform(function ($post) {
             return [
@@ -44,25 +44,26 @@ class PostManageController extends Controller
             'data' => $posts
         ]);
     }
-    public function getPost(Request $request){
+    public function getPost(Request $request)
+    {
         $post = Post::where('id', $request->post_id)->first();
 
         if (!$post) {
             return response()->json([
-                'status'=> false,
-                'message'=> 'Post not found'
+                'status' => false,
+                'message' => 'Post not found'
             ]);
         }
-        
+
         $post->photo = json_decode($post->photo, true);
         $post->tagged = json_decode($post->tagged, true);
         $post->commentCounts = Comment::where('post_id', $post->id)->get()->count();
-        $post->avatar_url = User::where('id',$post->user_id)->first()->avatar_url;
+        $post->avatar_url = User::where('id', $post->user_id)->first()->avatar_url;
 
         return response()->json([
-            'status'=> true,
-            'message'=> 'View post',
-            'data'=> $post
+            'status' => true,
+            'message' => 'View post',
+            'data' => $post
         ]);
     }
     public function deletePost(Request $request)
