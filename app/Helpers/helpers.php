@@ -268,7 +268,7 @@ if (!function_exists('imageUpload')) {
         return $file->storeAs($directory, $fileName, 'public');
     }
 
-    function imageUpload($file, string $fieldName, string $directory, ?int $width = null, ?int $height = null, int $quality = 90, bool $forceWebp = false): ?string
+    function imageUpload5($file, string $fieldName, string $directory, ?int $width = null, ?int $height = null, int $quality = 90, bool $forceWebp = false): ?string
     {
         if (!$file instanceof \Illuminate\Http\UploadedFile || !$file->isValid()) {
             return null;
@@ -343,6 +343,86 @@ if (!function_exists('imageUpload')) {
         }
 
         // ব্যাকআপ: যদি কনভার্সন ফেইল করে তবে অরিজিনাল ফাইল আপলোড
+        $fileName = "{$timestamp}_{$slugName}.{$extension}";
+        return $file->storeAs($directory, $fileName, 'public');
+    }
+
+    function imageUpload($file, string $fieldName, string $directory, ?int $width = null, ?int $height = null, int $quality = 90, bool $forceWebp = false): ?string
+    {
+        if (!$file instanceof \Illuminate\Http\UploadedFile || !$file->isValid()) {
+            return null;
+        }
+
+        $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $slugName = Str::slug($originalName);
+        $timestamp = time();
+        $extension = strtolower($file->getClientOriginalExtension());
+        $mimeType = $file->getMimeType();
+
+        $isHeic = in_array($extension, ['heic', 'heif']) || $mimeType === 'image/heic';
+
+        try {
+            if ($isHeic) {
+                $fileName = "{$timestamp}_{$slugName}.webp";
+                $tempSource = $file->getRealPath();
+
+                // ১. ডিরেক্টরি তৈরি নিশ্চিত করা
+                $storagePath = storage_path("app/public/{$directory}");
+                if (!file_exists($storagePath)) {
+                    mkdir($storagePath, 0755, true);
+                }
+                $targetPath = $storagePath . '/' . $fileName;
+
+                // ২. heif-convert কমান্ড রান করা
+                $command = "heif-convert -q {$quality} " . escapeshellarg($tempSource) . " " . escapeshellarg($targetPath) . " 2>&1";
+
+                // আউটপুট চেক করার জন্য exec ব্যবহার
+                exec($command, $output, $returnVar);
+
+                if ($returnVar === 0 && file_exists($targetPath)) {
+                    // সাকসেস হলে রিসাইজ করা (যদি লাগে)
+                    if ($width || $height) {
+                        $manager = new ImageManager(new Driver());
+                        $image = $manager->read($targetPath);
+                        $image->scaleDown(width: $width, height: $height);
+                        $image->toWebp($quality)->save($targetPath);
+                    }
+                    return "{$directory}/{$fileName}";
+                } else {
+                    // কেন ফেইল করল তা লগে দেখা যাবে
+                    Log::error("HEIC Conversion Failed. Command: {$command}. Output: " . implode(', ', $output));
+                }
+            } else {
+                // সাধারণ ছবির জন্য (JPG, PNG)
+                $manager = new ImageManager(new Driver());
+                $image = $manager->read($file->getRealPath());
+
+                if ($width || $height) {
+                    $image->scaleDown(width: $width, height: $height);
+                }
+
+                if ($forceWebp) {
+                    $fileName = "{$timestamp}_{$slugName}.webp";
+                    $encoded = $image->toWebp($quality);
+                } else {
+                    $fileName = "{$timestamp}_{$slugName}.{$extension}";
+                    $encoded = match ($extension) {
+                        'jpg', 'jpeg' => $image->toJpeg($quality),
+                        'gif'         => $image->toGif(),
+                        'png'         => $image->toPng(),
+                        default       => $image->toWebp($quality),
+                    };
+                }
+
+                $filePath = "{$directory}/{$fileName}";
+                Storage::disk('public')->put($filePath, $encoded->toString());
+                return $filePath;
+            }
+        } catch (\Exception $e) {
+            Log::error("Image Upload Exception: " . $e->getMessage());
+        }
+
+        // ব্যাকআপ: সবকিছু ফেইল করলে অরিজিনাল ফাইল আপলোড
         $fileName = "{$timestamp}_{$slugName}.{$extension}";
         return $file->storeAs($directory, $fileName, 'public');
     }
