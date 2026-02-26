@@ -33,6 +33,7 @@ class PostManageController extends Controller
                 'name' => $post->user->name ?? null,
                 'location' => $post->location,
                 'food_type' => $post->food_type,
+                'meal_name' => $post->meal_name,
                 'have_it' => $post->have_it,
                 'restaurant_name' => $post->restaurant_name
             ];
