@@ -13,6 +13,7 @@ use App\Notifications\NewReportCreationNotification;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
@@ -236,7 +237,7 @@ class ProfileController extends Controller
         ]);
     }
 
-    public function editPost(Request $request, $id)
+    public function editPost1(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
             'meal_name' => 'nullable|string',
@@ -264,8 +265,8 @@ class ProfileController extends Controller
         }
 
         // Update basic fields
-        $post->meal_name = $request->meal_name;
-        $post->description = $request->description;
+        $post->meal_name = $request->meal_name ?? $post->meal_name;
+        $post->description = $request->description ?? $post->description;
 
         // If new images uploaded
         if ($request->hasFile('images')) {
@@ -308,5 +309,93 @@ class ProfileController extends Controller
             'message' => 'Post updated successfully',
             'data' => $post
         ]);
+    }
+
+    public function editPost(Request $request, $id)
+    {
+        try {
+
+            $validator = Validator::make($request->all(), [
+                'meal_name' => 'nullable|string',
+                'description' => 'nullable|string',
+                'images' => 'sometimes|array|max:5',
+                'images.*' => 'file|mimes:jpeg,png,jpg,webp,gif,svg,heic|max:102400',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => false,
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            $post = Post::where('id', $id)
+                ->where('user_id', Auth::id())
+                ->first();
+
+            if (!$post) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Post not found!'
+                ], 404);
+            }
+
+            // Update basic fields
+            $post->meal_name = $request->meal_name ?? $post->meal_name;
+            $post->description = $request->description ?? $post->description;
+
+            // If new images uploaded
+            if ($request->hasFile('images')) {
+
+                // Delete old images
+                $oldPhotos = json_decode($post->photo, true);
+
+                if ($oldPhotos) {
+                    foreach ($oldPhotos as $oldPhoto) {
+                        $filePath = str_replace('/storage/', '', $oldPhoto);
+
+                        if (Storage::disk('public')->exists($filePath)) {
+                            Storage::disk('public')->delete($filePath);
+                        }
+                    }
+                }
+
+                $paths = [];
+
+                foreach ($request->file('images') as $image) {
+
+                    $filepath = imageUpload(
+                        $image,
+                        'image',
+                        'uploads/posts',
+                        1080,
+                        1080,
+                        80,
+                        true
+                    );
+
+                    $paths[] = '/storage/' . $filepath;
+                }
+
+                $post->photo = json_encode($paths);
+            }
+
+            $post->save();
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Post updated successfully',
+                'data' => $post
+            ]);
+        } catch (\Exception $e) {
+
+            Log::error('Edit Post Error: ' . $e->getMessage());
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Something went wrong!',
+                'error' => config('app.debug') ? $e->getMessage() : null
+            ], 500);
+        }
     }
 }
