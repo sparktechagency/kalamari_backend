@@ -17,6 +17,7 @@ use App\Services\PushNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -124,6 +125,26 @@ class PostController extends Controller
         //         'redirect' => 'post_id'
         //     ]
         // );
+
+        // $message = 'You' . ' post added successfully.'
+
+        //  // push notification
+        // $user = User::find($assign_employee_id);
+ 
+        // if ($user && $user->device_token) {
+        //     $response = Http::post('https://exp.host/--/api/v2/push/send', [
+        //         'to'    => $user->device_token,
+        //         'title' => "New post added",
+        //         'body'  => $message,
+        //         'sound' => 'default',
+        //         'data'  => [
+        //             'type'     => 'order_assigned',
+        //             'order_id' => $order->id,
+        //             'is_body_use' => false,
+        //         ],
+        //     ]);
+        //     Log::info($response->json());
+        // }
 
 
         $followers_id = Follower::where('user_id', Auth::id())->pluck('follower_id');

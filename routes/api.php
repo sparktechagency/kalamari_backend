@@ -122,7 +122,7 @@ Route::middleware('auth:api')->group(function () {
         Route::post('/user-block', [ProfileController::class, 'userBlock']);
         Route::post('/user-report', [ProfileController::class, 'userReport']);
         Route::delete('/delete-recent', [ProfileController::class, 'deleteRecent']);
-        Route::patch('/edit-post', [ProfileController::class, 'editPost']);
+        Route::patch('/edit-post/{id?}', [ProfileController::class, 'editPost']);
 
     });
 });
