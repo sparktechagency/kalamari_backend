@@ -81,7 +81,7 @@ class ProfileController extends Controller
     {
         $followings_id = Follower::where('follower_id', $request->user_id ?? Auth::id())->get()->pluck('user_id');
 
-        $followings = User::select('id', 'name', 'avatar','verified_status')->whereIn('id', $followings_id);
+        $followings = User::select('id', 'name', 'avatar', 'verified_status')->whereIn('id', $followings_id);
 
         $followings = $followings->paginate($request->per_page ?? 10);
 
@@ -109,7 +109,7 @@ class ProfileController extends Controller
         $followings_id = Follower::where('follower_id', Auth::id())->pluck('user_id');
 
         // followers list
-        $followers = User::select('id', 'name', 'avatar','verified_status')->whereIn('id', $followers_id);
+        $followers = User::select('id', 'name', 'avatar', 'verified_status')->whereIn('id', $followers_id);
         $followers = $followers->paginate($request->per_page ?? 10);
 
         // $followers = $followers->map(function ($follower) use ($followings_id) {
@@ -190,7 +190,7 @@ class ProfileController extends Controller
             'reported_id' => 'required|numeric|exists:users,id',
             'content' => 'required|string'
         ]);
- 
+
         if ($validator->fails()) {
             return response()->json([
                 'status' => false,
@@ -233,6 +233,80 @@ class ProfileController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Post deleted successfully'
+        ]);
+    }
+
+    public function editPost(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'meal_name' => 'nullable|string',
+            'description' => 'nullable|string',
+            'images' => 'sometimes|array|max:5',
+            'images.*' => 'file|mimes:jpeg,png,jpg,webp,gif,svg,heic|max:102400',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $post = Post::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->first();
+
+        if (!$post) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Post not found!'
+            ], 404);
+        }
+
+        // Update basic fields
+        $post->meal_name = $request->meal_name;
+        $post->description = $request->description;
+
+        // If new images uploaded
+        if ($request->hasFile('images')) {
+
+            // optional: delete old images from storage
+            $oldPhotos = json_decode($post->photo, true);
+            if ($oldPhotos) {
+                foreach ($oldPhotos as $oldPhoto) {
+                    $filePath = str_replace('/storage/', '', $oldPhoto);
+                    if (Storage::disk('public')->exists($filePath)) {
+                        Storage::disk('public')->delete($filePath);
+                    }
+                }
+            }
+
+            $paths = [];
+
+            foreach ($request->file('images') as $image) {
+
+                $filepath = imageUpload(
+                    $image,
+                    'image',
+                    'uploads/posts',
+                    1080,
+                    1080,
+                    80,
+                    true
+                );
+
+                $paths[] = '/storage/' . $filepath;
+            }
+
+            $post->photo = json_encode($paths);
+        }
+
+        $post->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Post updated successfully',
+            'data' => $post
         ]);
     }
 }
