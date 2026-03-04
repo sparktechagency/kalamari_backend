@@ -17,6 +17,7 @@ use App\Services\PushNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -90,7 +91,7 @@ class PostController extends Controller
                 true
             );
 
-         $paths[] = '/storage/' . $filepath;
+            $paths[] = '/storage/' . $filepath;
         }
 
         $tagged = json_decode($request->tagged[0], true);
@@ -126,25 +127,49 @@ class PostController extends Controller
         //     ]
         // );
 
-        // $message = 'You' . ' post added successfully.'
 
-        //  // push notification
-        // $user = User::find($assign_employee_id);
- 
-        // if ($user && $user->device_token) {
-        //     $response = Http::post('https://exp.host/--/api/v2/push/send', [
-        //         'to'    => $user->device_token,
-        //         'title' => "New post added",
-        //         'body'  => $message,
-        //         'sound' => 'default',
-        //         'data'  => [
-        //             'type'     => 'order_assigned',
-        //             'order_id' => $order->id,
-        //             'is_body_use' => false,
-        //         ],
-        //     ]);
-        //     Log::info($response->json());
-        // }
+        // push notification
+        $rawData = $request->tagged;
+        $formattedData = json_decode($rawData[0], true);
+        $ids = collect($formattedData)->pluck('id')->toArray();
+        foreach ($ids as $id) {
+            $user = User::find($id);
+            $message = Auth::user()->full_name . ' tagged you in his post';
+
+            if ($user && $user->device_token) {
+                $response = Http::post('https://exp.host/--/api/v2/push/send', [
+                    'to'    => $user->device_token,
+                    'title' => "Tagged you",
+                    'body'  => $message,
+                    'sound' => 'default',
+                    'data'  => [
+                        'type'     => 'tagged',
+                        'post_id' => $post->id,
+                        'is_body_use' => true,
+                    ],
+                ]);
+                Log::info($response->json());
+            }
+        }
+
+
+        $user = User::find(Auth::id());
+        $message = 'You' . ' post created successfully.';
+
+        if ($user && $user->device_token) {
+            $response = Http::post('https://exp.host/--/api/v2/push/send', [
+                'to'    => $user->device_token,
+                'title' => "New post added",
+                'body'  => $message,
+                'sound' => 'default',
+                'data'  => [
+                    'type'     => 'post_created',
+                    'post_id' => $post->id,
+                    'is_body_use' => true,
+                ],
+            ]);
+            Log::info($response->json());
+        }
 
 
         $followers_id = Follower::where('user_id', Auth::id())->pluck('follower_id');
@@ -163,6 +188,25 @@ class PostController extends Controller
             //         'redirect' => 'post_id'
             //     ]
             // );
+
+            // push notification
+            $user = User::find(Auth::id());
+            $message = Auth::user()->full_name . ' added a new post.';
+
+            if ($user && $user->device_token) {
+                $response = Http::post('https://exp.host/--/api/v2/push/send', [
+                    'to'    => $user->device_token,
+                    'title' => "New post",
+                    'body'  => $message,
+                    'sound' => 'default',
+                    'data'  => [
+                        'type'     => 'post_created',
+                        'post_id' => $post->id,
+                        'is_body_use' => true,
+                    ],
+                ]);
+                Log::info($response->json());
+            }
         }
 
         $notifyAdmin = User::where('role', 'ADMIN')->first();
@@ -347,6 +391,25 @@ class PostController extends Controller
             $notifyUser = User::where('id', $request->user_id)->first();
             // Notify user
             $notifyUser->notify(new NewFollowNotification($Follower));
+
+            // push notification
+            $user = User::find($userId);
+            $message = Auth::user()->full_name . ' following you.';
+
+            if ($user && $user->device_token) {
+                $response = Http::post('https://exp.host/--/api/v2/push/send', [
+                    'to'    => $user->device_token,
+                    'title' => "Following you",
+                    'body'  => $message,
+                    'sound' => 'default',
+                    'data'  => [
+                        'type'     => 'follower_created',
+                        'user_id' => $userId,
+                        'is_body_use' => true,
+                    ],
+                ]);
+                Log::info($response->json());
+            }
 
             return response()->json([
                 'status' => true,

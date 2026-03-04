@@ -9,6 +9,8 @@ use App\Models\User;
 use App\Notifications\NewReactNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class HeartController extends Controller
 {
@@ -59,6 +61,25 @@ class HeartController extends Controller
 
             // Notify post user
             $notifyUser->notify(new NewReactNotification($heart));
+
+            // push notification
+            $user = User::find($post->user_id);
+            $message = Auth::user()->full_name . ' a new react in you post.';
+
+            if ($user && $user->device_token) {
+                $response = Http::post('https://exp.host/--/api/v2/push/send', [
+                    'to'    => $user->device_token,
+                    'title' => "New react",
+                    'body'  => $message,
+                    'sound' => 'default',
+                    'data'  => [
+                        'type'     => 'react_created',
+                        'post_id' => $post->id,
+                        'is_body_use' => true,
+                    ],
+                ]);
+                Log::info($response->json());
+            }
 
             return response()->json([
                 'status' => true,
