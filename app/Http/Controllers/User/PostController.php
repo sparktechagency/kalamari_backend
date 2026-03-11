@@ -629,6 +629,39 @@ class PostController extends Controller
             ->where('post_status', 'approved')
             ->groupBy('restaurant_name');
 
+        // $restaurants = DB::table('posts as p')
+        //     ->joinSub($latestPostSub, 'lp', function ($join) {
+        //         $join->on('p.id', '=', 'lp.id');
+        //     })
+        //     ->select(
+        //         'p.id',
+        //         'p.photo',
+        //         'p.restaurant_name',
+        //         'p.location',
+        //         'p.latitude',
+        //         'p.longitude',
+
+        //         // 🔹 total posts per restaurant
+        //         DB::raw('(SELECT COUNT(*) FROM posts WHERE restaurant_name = p.restaurant_name AND post_status="approved") as post_count'),
+
+        //         DB::raw('(SELECT AVG(rating) FROM posts WHERE restaurant_name = p.restaurant_name AND post_status="approved") as average_rating'),
+
+        //         // 🔹 distance
+        //         DB::raw("(
+        //             6371 * acos(
+        //                 cos(radians($lat)) * cos(radians(p.latitude)) *
+        //                 cos(radians(p.longitude) - radians($lng)) +
+        //                 sin(radians($lat)) * sin(radians(p.latitude))
+        //             )
+        //         ) AS distance")
+        //     )
+        //     ->when($radiusInKm, function ($q) use ($radiusInKm) {
+        //         $q->having('distance', '<=', $radiusInKm);
+        //     })
+        //     ->orderBy('distance')
+        //     ->get();
+
+
         $restaurants = DB::table('posts as p')
             ->joinSub($latestPostSub, 'lp', function ($join) {
                 $join->on('p.id', '=', 'lp.id');
@@ -641,30 +674,21 @@ class PostController extends Controller
                 'p.latitude',
                 'p.longitude',
 
-                // 🔹 total posts per restaurant
                 DB::raw('(SELECT COUNT(*) FROM posts WHERE restaurant_name = p.restaurant_name AND post_status="approved") as post_count'),
 
-                DB::raw('(SELECT AVG(rating) FROM posts WHERE restaurant_name = p.restaurant_name AND post_status="approved") as average_rating'),
-
-                // 🔹 distance
-                DB::raw("(
-                    6371 * acos(
-                        cos(radians($lat)) * cos(radians(p.latitude)) *
-                        cos(radians(p.longitude) - radians($lng)) +
-                        sin(radians($lat)) * sin(radians(p.latitude))
-                    )
-                ) AS distance")
+                DB::raw('(SELECT AVG(rating) FROM posts WHERE restaurant_name = p.restaurant_name AND post_status="approved") as average_rating')
             )
-            ->when($radiusInKm, function ($q) use ($radiusInKm) {
-                $q->having('distance', '<=', $radiusInKm);
-            })
-            ->orderBy('distance')
+
+            // 🎯 Exact location match
+            ->where('p.latitude', $lat)
+            ->where('p.longitude', $lng)
+
             ->get();
 
         foreach ($restaurants as $restaurant) {
             $restaurant->photo = json_decode($restaurant->photo, true);
-            $restaurant->distance = round($restaurant->distance, 2);
-            $restaurant->unit = 'km';
+            // $restaurant->distance = round($restaurant->distance, 2);
+            // $restaurant->unit = 'km';
         }
 
         return response()->json([
