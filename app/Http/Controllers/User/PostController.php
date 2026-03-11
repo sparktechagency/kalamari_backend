@@ -629,38 +629,86 @@ class PostController extends Controller
             ->where('post_status', 'approved')
             ->groupBy('restaurant_name');
 
-        // $restaurants = DB::table('posts as p')
-        //     ->joinSub($latestPostSub, 'lp', function ($join) {
-        //         $join->on('p.id', '=', 'lp.id');
-        //     })
-        //     ->select(
-        //         'p.id',
-        //         'p.photo',
-        //         'p.restaurant_name',
-        //         'p.location',
-        //         'p.latitude',
-        //         'p.longitude',
+        $restaurants = DB::table('posts as p')
+            ->joinSub($latestPostSub, 'lp', function ($join) {
+                $join->on('p.id', '=', 'lp.id');
+            })
+            ->select(
+                'p.id',
+                'p.photo',
+                'p.restaurant_name',
+                'p.location',
+                'p.latitude',
+                'p.longitude',
 
-        //         // 🔹 total posts per restaurant
-        //         DB::raw('(SELECT COUNT(*) FROM posts WHERE restaurant_name = p.restaurant_name AND post_status="approved") as post_count'),
+                // 🔹 total posts per restaurant
+                DB::raw('(SELECT COUNT(*) FROM posts WHERE restaurant_name = p.restaurant_name AND post_status="approved") as post_count'),
 
-        //         DB::raw('(SELECT AVG(rating) FROM posts WHERE restaurant_name = p.restaurant_name AND post_status="approved") as average_rating'),
+                DB::raw('(SELECT AVG(rating) FROM posts WHERE restaurant_name = p.restaurant_name AND post_status="approved") as average_rating'),
 
-        //         // 🔹 distance
-        //         DB::raw("(
-        //             6371 * acos(
-        //                 cos(radians($lat)) * cos(radians(p.latitude)) *
-        //                 cos(radians(p.longitude) - radians($lng)) +
-        //                 sin(radians($lat)) * sin(radians(p.latitude))
-        //             )
-        //         ) AS distance")
-        //     )
-        //     ->when($radiusInKm, function ($q) use ($radiusInKm) {
-        //         $q->having('distance', '<=', $radiusInKm);
-        //     })
-        //     ->orderBy('distance')
-        //     ->get();
+                // 🔹 distance
+                DB::raw("(
+                    6371 * acos(
+                        cos(radians($lat)) * cos(radians(p.latitude)) *
+                        cos(radians(p.longitude) - radians($lng)) +
+                        sin(radians($lat)) * sin(radians(p.latitude))
+                    )
+                ) AS distance")
+            )
+            ->when($radiusInKm, function ($q) use ($radiusInKm) {
+                $q->having('distance', '<=', $radiusInKm);
+            })
+            ->orderBy('distance')
+            ->get();
 
+        foreach ($restaurants as $restaurant) {
+            $restaurant->photo = json_decode($restaurant->photo, true);
+            $restaurant->distance = round($restaurant->distance, 2);
+            $restaurant->unit = 'km';
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => $radiusInKm
+                ? "Get restaurants within {$radiusInKm} km"
+                : 'Get restaurants',
+            'center' => [
+                'latitude' => $lat,
+                'longitude' => $lng,
+            ],
+            'data' => $restaurants
+        ]);
+    }
+
+    public function singleRestaurantSearch(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'latitude' => 'required|numeric',
+            'longitude' => 'required|numeric',
+            'radius'   => 'nullable|numeric',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'message' => $validator->errors()
+            ], 422);
+        }
+
+        $lat = $request->latitude;
+        $lng = $request->longitude;
+        $radiusInKm = $request->radius;
+
+        // 🔹 প্রতি restaurant এর highest rated post নেবো
+        $latestPostSub = DB::table('posts')
+            ->selectRaw('
+            MAX(id) as id,
+            restaurant_name
+        ')
+            ->whereNotNull('restaurant_name')
+            ->where('have_it', 'Restaurant')
+            ->where('post_status', 'approved')
+            ->groupBy('restaurant_name');
 
         $restaurants = DB::table('posts as p')
             ->joinSub($latestPostSub, 'lp', function ($join) {
@@ -694,8 +742,8 @@ class PostController extends Controller
         return response()->json([
             'status' => true,
             'message' => $radiusInKm
-                ? "Restaurants within {$radiusInKm} km"
-                : 'Worldwide restaurant map',
+                ? "Get restaurants in search this lat lng within {$radiusInKm} km"
+                : 'Get restaurants in search this lat lng',
             'center' => [
                 'latitude' => $lat,
                 'longitude' => $lng,
